@@ -72,7 +72,7 @@ Body:
 ```
 
 
-## **8. Core Endpoints**
+## **6. Core Endpoints**
 
 ### **Create Event**
 
@@ -102,7 +102,7 @@ Automatically:
 * moves them to `waitlist` if capacity reached.
 
 
-## **9. Tech Stack**
+## **7. Tech Stack**
 
 * Node.js
 * Express.js
