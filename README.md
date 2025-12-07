@@ -44,7 +44,7 @@ JWT_SECRET=your_random_secret_string
 node server.js
 
 // Frontend
-npm run dev
+npm start
 ```
 
 ## **5. Authentication Flow**
