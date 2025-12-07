@@ -118,10 +118,10 @@ Automatically:
 
 ### **Frontend**
 
-* React + Vite
+* React
 * React Router
 * Tailwind CSS
-* Framer Motion (animations)
+* Framer Motion
 * Fetch API networking
 
 ### **Backend**
