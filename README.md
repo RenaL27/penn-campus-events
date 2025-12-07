@@ -19,9 +19,9 @@ cd penn-campus-events/backend
 
 ## **2. Install Dependencies**
 
-Make sure you're inside the backend folder:
 
 ```bash
+// Inside both frontend and backend folder
 npm install
 ```
 
@@ -40,7 +40,11 @@ JWT_SECRET=your_random_secret_string
 ## **4. Run the Server**
 
 ```bash
+// Backend
 node server.js
+
+// Frontend
+npm run dev
 ```
 
 ## **5. Authentication Flow**
@@ -85,6 +89,8 @@ Body:
   "title": "Movie Night",
   "description": "Snacks + movie",
   "date": "2025-02-14T18:00:00.000Z",
+  "time": "18:00",
+  "location": "Houston Hall",
   "capacity": 50
 }
 ```
@@ -101,10 +107,28 @@ Automatically:
 * adds user to `attendees` or
 * moves them to `waitlist` if capacity reached.
 
+### **Get All Events**
+`GET /events`
+
+### **Get Event By ID**
+
+`GET /events/:eventId`
 
 ## **7. Tech Stack**
+
+### **Frontend**
+
+* React + Vite
+* React Router
+* Tailwind CSS
+* Framer Motion (animations)
+* Fetch API networking
+
+### **Backend**
 
 * Node.js
 * Express.js
 * MongoDB + Mongoose
-* JWT Authentication
+* JWT authentication
+* RESTful routes
+

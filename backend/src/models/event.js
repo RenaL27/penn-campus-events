@@ -5,6 +5,8 @@ const eventSchema = new mongoose.Schema({
     description: String,
     date: Date,
     capacity: Number,
+    time: String,
+    location: String,
     attendees: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     waitlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     organizer: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
