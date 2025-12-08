@@ -92,19 +92,15 @@ export default function Events() {
             }
             className="border p-2 rounded"
           />
-          <select
+          <input
+            type="text"
+            placeholder="Organizer name"
             value={filters.organizer}
             onChange={(e) =>
               setFilters({ ...filters, organizer: e.target.value })
             }
-            className="border p-2 rounded">
-            <option value="">Organizer</option>
-            {organizers.map((org) => (
-              <option key={org._id} value={org._id}>
-                {org.name} (@{org.username})
-              </option>
-            ))}
-          </select>
+            className="border p-2 rounded"
+          />
         </div>
       </div>
 

@@ -22,13 +22,20 @@ router.get("/", async (req, res) => {
 
     if (time) filters.time = time;
     if (location) filters.location = new RegExp(location, "i");
-    if (organizer) filters.organizer = organizer;
 
     const events = await Event.find(filters)
       .populate("organizer", "name username")
       .sort({ date: 1 });
 
-    res.json(events);
+    // Filter by organizer name
+    let filtered = events;
+    if (organizer) {
+      filtered = events.filter(event => 
+        event.organizer && event.organizer.name.toLowerCase().includes(organizer.toLowerCase())
+      );
+    }
+
+    res.json(filtered);
 
   } catch (error) {
     console.error("Error loading events:", error);
