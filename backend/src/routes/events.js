@@ -9,7 +9,17 @@ router.get("/", async (req, res) => {
 
     let filters = {};
 
-    if (date) filters.date = { $gte: new Date(date), $lte: new Date(date) };
+    if (date) {
+      const parts = date.split("-").map(Number);
+      if (parts.length === 3) {
+        const [y, m, d] = parts;
+        const start = new Date(y, m - 1, d, 0, 0, 0, 0);
+        const end = new Date(y, m - 1, d, 23, 59, 59, 999);
+
+        filters.date = { $gte: start, $lte: end };
+      }
+    }
+
     if (time) filters.time = time;
     if (location) filters.location = new RegExp(location, "i");
     if (organizer) filters.organizer = organizer;
@@ -130,7 +140,9 @@ router.post("/:eventId/rsvp", auth, async (req, res) => {
     }
 
     if (isWaitlisted) {
-      return res.status(400).json({ error: "You are already waitlisted for this event" });
+      event.waitlist = event.waitlist.filter(id => id.toString() !== userId);
+      await event.save();
+      return res.json({ message: "You have been removed from the waitlist" });
     }
 
     if (event.attendees.length < event.capacity) {
