@@ -1,6 +1,14 @@
 # Penn Campus Events
 
-A campus events platform for Penn students built with React, Express, and MongoDB.
+Penn Campus Events is a web application that helps University of Pennsylvania students discover campus activities, connect with classmates, and manage event registration in one place. It brings academic talks, student organization events, arts programs, social gatherings, wellness activities, and volunteer opportunities into a searchable campus event directory.
+
+Campus opportunities can be spread across organization websites, social media, and group chats, making it difficult for students to find relevant events or keep track of their plans. Penn Campus Events addresses this by combining personalized recommendations with filters for interests, dates, event formats, and friends’ attendance. Students can explore upcoming events, watch short event videos, register for activities, and receive updates through an in-app notification inbox.
+
+For organizers, the platform provides tools to publish events, share promotional videos, manage capacity, and view registrations. When an event fills up, students can join a waitlist and automatically receive a place when one becomes available.
+
+The product’s intended impact is to make campus opportunities easier to discover and participation easier to coordinate. By reducing the effort required to find relevant activities and see where friends are going, it aims to support student involvement, help organizations reach interested students, and encourage connections across campus. These are design goals; participation and engagement outcomes have not yet been measured.
+
+Built with React, Express, and MongoDB, the application includes persistent data storage, authenticated accounts, and a responsive interface. Current example listings are clearly labeled fictional sample events; this is a student project, not an official university event directory.
 
 **Live website:** [penn-campus-events.onrender.com](https://penn-campus-events.onrender.com/)
 
