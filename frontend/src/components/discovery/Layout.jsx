@@ -1,5 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { isLoggedIn } from "../../utils/api";
+import NotificationBell from "./NotificationBell";
 import Icon from "./Icon";
 export default function Layout({ children }) {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export default function Layout({ children }) {
           <NavLink to="/friends">Friends</NavLink>
           {loggedIn && <NavLink to="/dashboard">My events</NavLink>}
         </nav>
-        <div className="header-actions">
+        <div className="header-actions">{loggedIn && <NotificationBell />}
           {loggedIn ? (
             <>
               <Link className="button button-small" to="/create">

@@ -1,5 +1,5 @@
 export const API_BASE = (
-  process.env.REACT_APP_API_URL || "http://localhost:8080"
+  process.env.REACT_APP_API_URL || (process.env.NODE_ENV === "production" ? window.location.origin : "http://localhost:8080")
 ).replace(/\/$/, "");
 export const isLoggedIn = () => Boolean(localStorage.getItem("token"));
 export async function api(
@@ -20,6 +20,15 @@ export async function api(
     signal,
     body: body ? (form ? body : JSON.stringify(body)) : undefined,
   });
+  if (res.status === 401 && auth && token) {
+    // Stop sending a rejected session token on subsequent requests.
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    if (window.location.pathname !== "/login") {
+      window.location.replace("/login?session=expired");
+    }
+    throw new Error("Please log in again to continue.");
+  }
   if (res.status === 204) return null;
   const data = await res.json().catch(() => ({}));
   if (!res.ok)

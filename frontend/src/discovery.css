@@ -2112,3 +2112,126 @@
     margin-right: 23px;
   }
 }
+
+/* Simplified cards: one title and only essential event information. */
+.event-art{height:215px;padding:24px}.art-category{font-size:12px;letter-spacing:0;text-transform:none;font-weight:600;line-height:1.5;max-width:70%}.art-title{font-size:28px;line-height:1.2;max-width:88%}.event-date-badge{width:56px;min-height:65px}.event-date-badge>span{font-size:12px;letter-spacing:.5px}.event-date-badge strong{font-size:26px}.event-card-body{padding:22px 24px}.card-schedule,.event-card .event-location{display:flex;align-items:flex-start;gap:10px;font-size:15px;line-height:1.55;margin:0;color:var(--ink)}.card-schedule{font-weight:600;margin-bottom:12px}.card-schedule svg,.event-card .event-location svg{flex-shrink:0;color:var(--teal);margin-top:3px}.event-card .event-location{color:var(--muted)}.card-format{font-size:14px;color:var(--teal);margin:12px 0 0;padding-left:28px}.event-card .friend-attendance,.card-attendance{border-top:1px solid var(--line);padding-top:16px;margin:18px 0 0;display:flex;align-items:center;gap:8px;font-size:14px;line-height:1.5;color:var(--muted)}.event-card .avatar-small{width:30px;height:30px;font-size:10px}
+@media(max-width:760px){.event-art{padding:20px;height:210px}.art-title{font-size:25px}.event-card-body{padding:20px}.art-category{font-size:12px}.card-schedule,.event-card .event-location{font-size:14px}}
+@media(max-width:440px){.art-title{font-size:29px}.card-schedule,.event-card .event-location{font-size:15px}}
+
+.event-card .card-host{display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.55;color:var(--muted);margin:12px 0 0}.card-host svg{flex-shrink:0;color:var(--teal);margin-top:3px}
+.notification-bell{position:relative;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border:1px solid var(--line);border-radius:8px;flex-shrink:0}.notification-bell>span{position:absolute;top:-6px;right:-7px;background:#963747;color:#fff;border:2px solid white;min-width:21px;height:21px;border-radius:20px;font-size:10px;display:flex;align-items:center;justify-content:center;padding:0 4px}.notification-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;gap:16px;font-size:14px;color:var(--muted)}.notification-list{background:white;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:30px}.notification-row{display:flex;align-items:flex-start;gap:16px;text-align:left;width:100%;border:0;border-bottom:1px solid var(--line);background:white;padding:24px;color:var(--ink)}.notification-row:last-child{border-bottom:0}.notification-row.unread{background:#edf2f9}.notification-row:hover{background:#e6edf6}.notification-row>span:nth-child(2){flex:1}.notification-row strong{font-size:16px;font-weight:650}.notification-message{display:block;font-size:14px;color:var(--muted);line-height:1.7;margin:5px 0 9px}.notification-row time{font-size:12px;color:var(--muted)}.notification-dot{width:8px;height:8px;border-radius:50%;background:transparent;flex-shrink:0;margin-top:9px}.unread .notification-dot{background:#963747}@media(max-width:760px){.header-actions{gap:12px}.notification-row{padding:20px 16px;gap:12px}.notification-toolbar .button{font-size:12px;padding:10px}}
+
+/* A quiet architectural backdrop for the home page. */
+.home-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin: 30px -16px 34px;
+  padding: 54px 38px 62px;
+  border: 1px solid #d9e2ef;
+  border-radius: 20px;
+  background: #edf2f9;
+  gap: 42px;
+}
+.hero-backdrop { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.hero-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(#244f7b1b .7px, transparent .7px);
+  background-size: 22px 22px;
+  mask-image: linear-gradient(90deg, transparent, #000);
+}
+.hero-glow { position: absolute; width: 650px; height: 650px; border-radius: 50%; animation: campus-drift 22s ease-in-out infinite alternate; }
+.glow-blue { right: -160px; top: -350px; background: radial-gradient(circle, #a8c2e46b, #a8c2e400 68%); }
+.glow-rose { left: -300px; bottom: -480px; background: radial-gradient(circle, #c998a75c, #c998a700 68%); animation-delay: -10s; animation-duration: 27s; }
+.campus-linework { position: absolute; width: 100%; height: 260px; bottom: -3px; opacity: .13; stroke: #38587d; stroke-width: 1.2; }
+.home-hero .hero-content { animation: campus-enter .7s ease-out both; }
+.home-hero h1 { font-size: clamp(38px, 4.3vw, 57px); }
+.home-hero .hero-description { font-size: 15px; max-width: 470px; }
+.home-hero .hero-search { box-shadow: 0 6px 18px #182e5009; transition: box-shadow .2s, border-color .2s; }
+.home-hero .hero-search:focus-within { border-color: #647e9f; box-shadow: 0 0 0 3px #244f7b12; }
+.home-hero .campus-directory { background: #fffffff0; border-radius: 12px; border-top-width: 3px; box-shadow: 0 14px 35px #182e500b; animation: campus-enter .8s .1s ease-out both; }
+.home-hero .campus-directory>a { padding: 15px 0; }
+.home-hero .campus-directory strong { font-size: 14px; }
+.home-hero .campus-directory small { font-size: 12px; line-height: 1.6; }
+.home-hero .campus-directory>a svg { transition: transform .2s; }
+.home-hero .campus-directory>a:hover svg { transform: translateX(4px); }
+.hero-motion-toggle { position: absolute; right: 26px; bottom: 15px; display: flex; align-items: center; gap: 7px; font-size: 11px!important; background: transparent; border: 0; color: #536b87; padding: 5px; border-radius: 4px; }
+.hero-motion-toggle:hover { background: #ffffff80; }
+.motion-paused .hero-glow { animation-play-state: paused; }
+.home-hero ~ .feed-section { animation: campus-enter .7s .15s ease-out both; }
+@keyframes campus-drift { from { transform: translate(0, 0) scale(1); } to { transform: translate(-65px, 70px) scale(1.18); } }
+@keyframes campus-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@media(max-width:1020px) { .home-hero { padding: 40px 28px 55px; gap: 28px; } }
+@media(max-width:760px) {
+  .home-hero { margin: 22px -4px 28px; padding: 30px 22px 53px; border-radius: 15px; gap: 27px; }
+  .home-hero h1 { font-size: 42px; }
+  .home-hero .hero-description { font-size: 14px; }
+  .home-hero .campus-directory { padding: 22px; }
+  .home-hero .campus-directory>a { padding: 12px 0; }
+  .campus-linework { height: 210px; }
+  .hero-motion-toggle { right: 20px; bottom: 12px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .home-hero *, .home-hero ~ .feed-section { animation: none!important; transition: none!important; }
+  .hero-motion-toggle { display: none; }
+}
+
+/* Full-width homepage background, with content aligned to the page grid. */
+.home-hero {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  margin-top: 0;
+  margin-bottom: 38px;
+  padding: 56px max(34px, calc((100vw - 1162px) / 2)) 62px;
+  border: 0;
+  border-bottom: 1px solid #dce2eb;
+  border-radius: 0;
+  gap: 48px;
+}
+.hero-motion-toggle {
+  right: max(34px, calc((100vw - 1162px) / 2));
+}
+@media(max-width:1020px) {
+  .home-hero { padding: 42px 34px 56px; gap: 28px; }
+}
+@media(max-width:760px) {
+  .home-hero {
+    margin-top: 0;
+    margin-bottom: 30px;
+    padding: 34px 22px 53px;
+    border-radius: 0;
+    gap: 27px;
+  }
+  .hero-motion-toggle { right: 22px; }
+}
+@media(max-width:440px) {
+  .home-hero { padding-left: 18px; padding-right: 18px; }
+  .hero-motion-toggle { right: 18px; }
+}
+
+/* Blend the homepage backdrop into the feed instead of ending at a divider. */
+.home-hero {
+  background: linear-gradient(180deg, #edf2f9 0%, #f1f4f9 66%, var(--paper) 100%);
+  border-bottom: 0;
+  margin-bottom: 12px;
+  padding-bottom: 76px;
+}
+.hero-backdrop {
+  mask-image: linear-gradient(180deg, #000 0%, #000 48%, transparent 100%);
+}
+.home-hero .campus-directory {
+  background: #ffffffb8;
+  border-color: #dce2eb;
+  border-top-width: 1px;
+  box-shadow: 0 6px 20px #182e5005;
+}
+.home-hero .hero-search { box-shadow: 0 3px 12px #182e5005; }
+.home-hero ~ .feed-section { padding-top: 8px; }
+.hero-motion-toggle { bottom: 27px; }
+@media(max-width:760px) {
+  .home-hero { padding-bottom: 68px; margin-bottom: 8px; }
+  .hero-motion-toggle { bottom: 23px; }
+}

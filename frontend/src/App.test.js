@@ -45,7 +45,7 @@ test("recommended feed displays real API results and anonymous friends tab offer
     </MemoryRouter>,
   );
   expect(
-    await screen.findByRole("link", { name: "Campus Jazz" }),
+    await screen.findByRole("link", { name: "View Campus Jazz" }),
   ).toBeInTheDocument();
   userEvent.click(screen.getByRole("tab", { name: "Friends Going" }));
   expect(

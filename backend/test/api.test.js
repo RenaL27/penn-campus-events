@@ -13,10 +13,10 @@ const Reel = require('../src/models/reel');
 const Friendship = require('../src/models/friendship');
 const Comment = require('../src/models/reelComment');
 let mongo, alice, bob, carol;
-const token = user => `Bearer ${jwt.sign({ userId: user._id }, process.env.JWT_SECRET)}`;
+const token = user => `Bearer ${jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { issuer: "penn-campus-events", audience: "penn-campus-events-web" })}`;
 const future = n => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
 const createEvent = (overrides = {}) => Event.create({ title: 'Campus gathering', description: 'Meet people', date: future(2), time: '18:00', location: 'Houston Hall', capacity: 20, category: 'Arts & Media', eventType: 'In-Person', organizer: alice._id, ...overrides });
-before(async () => { mongo = await MongoMemoryServer.create({ instance: { launchTimeout: 60000 } }); await mongoose.connect(mongo.getUri()); await Promise.all([User.init(), Event.init(), Friendship.init()]); });
+before(async () => { mongo = await MongoMemoryServer.create({ instance: { launchTimeout: 60000, args: ["--setParameter", "indexBuildMinAvailableDiskSpaceMB=100"] } }); await mongoose.connect(mongo.getUri()); await Promise.all([User.init(), Event.init(), Friendship.init()]); });
 after(async () => { await mongoose.disconnect(); if (mongo) await mongo.stop(); });
 beforeEach(async () => {
   await Promise.all([User.deleteMany({}), Event.deleteMany({}), Reel.deleteMany({}), Friendship.deleteMany({}), Comment.deleteMany({})]);
@@ -129,4 +129,62 @@ test('legacy events without an event type remain discoverable as In-Person', asy
   const result = await request(app).get('/events/discover?types=In-Person').expect(200);
   assert.equal(result.body.total, 1);
   assert.equal(result.body.events[0]._id, String(event._id));
+});
+
+test('notification inbox isolates accounts and supports idempotent read actions', async () => {
+  const Notification = require('../src/models/notification');
+  await Notification.deleteMany({});
+  const friend = await request(app).post(`/users/me/friends/${bob._id}`).set('Authorization', token(alice)).expect(201);
+  let inbox = await request(app).get('/notifications').set('Authorization', token(bob)).expect(200);
+  assert.equal(inbox.body.unread, 1);
+  assert.equal(inbox.body.items[0].kind, 'friend_request');
+  await request(app).get('/notifications').expect(401);
+  await request(app).put(`/notifications/${inbox.body.items[0]._id}/read`).set('Authorization', token(carol)).expect(404);
+  for (let i = 0; i < 2; i++) await request(app).put(`/notifications/${inbox.body.items[0]._id}/read`).set('Authorization', token(bob)).expect(204);
+  assert.equal((await request(app).get('/notifications/unread').set('Authorization', token(bob))).body.unread, 0);
+  await request(app).put(`/users/me/friends/${friend.body._id}`).set('Authorization', token(bob)).expect(200);
+  assert.equal((await request(app).get('/notifications').set('Authorization', token(alice))).body.items[0].kind, 'friend_accepted');
+  await request(app).put('/notifications/read-all').set('Authorization', token(alice)).expect(204);
+  assert.equal((await request(app).get('/notifications/unread').set('Authorization', token(alice))).body.unread, 0);
+});
+
+test('registration, promotion and meaningful event edits generate notifications', async () => {
+  const Notification = require('../src/models/notification');
+  await Notification.deleteMany({});
+  const event = await createEvent({ capacity: 1 });
+  const url = `/events/${event._id}`;
+  await request(app).post(`${url}/rsvp`).set('Authorization', token(bob)).expect(200);
+  await request(app).post(`${url}/rsvp`).set('Authorization', token(carol)).expect(200);
+  await request(app).put(url).set('Authorization', token(alice)).send({ capacity: 2 }).expect(200);
+  const carolNotifications = await Notification.find({ recipient: carol._id });
+  assert.ok(carolNotifications.some(item => item.kind === 'waitlist'));
+  assert.ok(carolNotifications.some(item => item.kind === 'promotion'));
+  assert.ok(carolNotifications.some(item => item.kind === 'event_update'));
+  const count = await Notification.countDocuments();
+  await request(app).put(url).set('Authorization', token(alice)).send({ capacity: 2 }).expect(200);
+  assert.equal(await Notification.countDocuments(), count);
+  await request(app).post(`${url}/rsvp`).set('Authorization', token(bob)).expect(200);
+  assert.ok(await Notification.exists({ recipient: bob._id, kind: 'cancellation' }));
+});
+
+test('authentication hashes new passwords, validates inputs, and expires scoped sessions', async () => {
+  const bcrypt = require('bcrypt');
+  const input = { name: 'New Student', username: 'new-student', email: 'student@example.test', password: 'test-password-123' };
+  await request(app).post('/auth/register').send({ ...input, password: 'short' }).expect(400);
+  await request(app).post('/auth/register').send({ ...input, username: { $ne: null } }).expect(400);
+  await request(app).post('/auth/register').send(input).expect(201);
+  const stored = await User.findOne({ username: input.username }).select('+password +passwordHashVersion');
+  assert.notEqual(stored.password, input.password);
+  assert.equal(stored.passwordHashVersion, 1);
+  assert.ok(await bcrypt.compare(input.password, stored.password));
+  await request(app).post('/auth/login').send({ username: input.username, password: 'incorrect' }).expect(400);
+  await request(app).post('/auth/login').send({ username: { $ne: null }, password: input.password }).expect(400);
+  const login = await request(app).post('/auth/login').send(input).expect(200);
+  const claims = jwt.verify(login.body.token, process.env.JWT_SECRET, { issuer: 'penn-campus-events', audience: 'penn-campus-events-web' });
+  assert.equal(claims.exp - claims.iat, 7 * 86400);
+  const me = await request(app).get('/users/me').set('Authorization', `Bearer ${login.body.token}`).expect(200);
+  assert.equal(me.body.password, undefined);
+  assert.equal(me.body.passwordHashVersion, undefined);
+  const old = jwt.sign({ userId: stored._id }, process.env.JWT_SECRET);
+  await request(app).get('/users/me').set('Authorization', `Bearer ${old}`).expect(401);
 });

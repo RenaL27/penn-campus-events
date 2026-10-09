@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const { notify } = require("../services/notifications");
 const User = require("../models/user");
 const Friendship = require("../models/friendship");
 const auth = require("../middleware/auth");
@@ -101,13 +102,9 @@ router.post("/me/friends/:userId", async (req, res) => {
     return res
       .status(409)
       .json({ error: "A friendship or request already exists." });
-  res.status(201).json(
-    await Friendship.create({
-      pair,
-      requester: req.userId,
-      recipient: other,
-    }),
-  );
+  const friendship = await Friendship.create({ pair, requester: req.userId, recipient: other });
+  await notify([other], { kind: "friend_request", title: "New friend request", message: `${req.user.name} sent you a friend request.`, href: "/friends" });
+  res.status(201).json(friendship);
 });
 router.put("/me/friends/:friendshipId", async (req, res) => {
   const friendship = await Friendship.findOneAndUpdate(
@@ -117,6 +114,7 @@ router.put("/me/friends/:friendshipId", async (req, res) => {
   );
   if (!friendship)
     return res.status(404).json({ error: "Incoming request not found." });
+  await notify([friendship.requester], { kind: "friend_accepted", title: "Friend request accepted", message: `${req.user.name} accepted your friend request.`, href: "/friends" });
   res.json(friendship);
 });
 router.delete("/me/friends/:friendshipId", async (req, res) => {

@@ -11,6 +11,7 @@ A campus events platform for Penn students, built with React, Express, and Mongo
 - Interest preferences and accepted friend requests.
 - Organizer video uploads with persistent GridFS storage, playback, likes, comments, comment likes, and link sharing.
 - Event creation, organizer editing, registration, waitlists, and an account event dashboard.
+- Persistent in-app notifications for registration/cancellation, waitlist promotions, organizer edits, and friend requests/acceptance.
 - A responsive navy and muted red design with date badges, category shortcuts, and structured event details.
 
 ## Local setup
@@ -33,6 +34,8 @@ JWT_SECRET=YOUR_RANDOM_SECRET
 CLIENT_ORIGIN=http://localhost:3000
 PORT=8080
 ```
+
+Before starting against an existing database, run `npm run migrate:passwords` in `backend` once. It converts legacy passwords without changing users’ passwords.
 
 Start the backend:
 
@@ -109,7 +112,7 @@ Reel uploads use multipart fields `eventId`, `caption`, and `video`. Like endpoi
 - `CI=true npm test -- --watchAll=false --runInBand` in `frontend`: discovery rendering, Apply/Reset/chips, search history, interest saving, and failure states.
 - `npm run build` in `frontend`: production build.
 
-The ranking service currently computes scores in application memory, appropriate for this campus prototype. A large production catalog should move ranking/pagination into database queries or a dedicated index. The existing authentication implementation still stores plaintext passwords; password hashing and other production hardening remain separate work.
+The ranking service currently computes scores in application memory, appropriate for this campus prototype. A large production catalog should move ranking/pagination into database queries or a dedicated index. Application passwords use bcrypt; production startup requires completing the legacy-password migration. See [deployment instructions](DEPLOYMENT.md).
 
 
 ## Core API
@@ -126,7 +129,7 @@ Event creation requires `title`, `date` (`YYYY-MM-DD`), `time` (`HH:mm`), `locat
 
 ## Remaining work
 
-Calendar views and synchronization, notifications, richer profiles, saved events, organization profiles/following, direct messages, event images, and deployment are not implemented. Some account and organizer screens retain the earlier UI. Before public use, replace plaintext password storage with hashing and add production API/upload protections. Recommendations use transparent heuristics rather than machine learning.
+Calendar views and synchronization, scheduled reminders and email/push notification delivery, richer profiles, saved events, organization profiles/following, direct messages, event images, are not implemented. Portable Docker deployment is configured; public hosting and production Atlas network access still need environment setup. Some account and organizer screens retain the earlier UI. Passwords are hashed and API/upload limits are enabled. See [DEPLOYMENT.md](DEPLOYMENT.md) for production configuration and remaining operational requirements. Recommendations use transparent heuristics rather than machine learning.
 
 ## Formatting
 
@@ -135,3 +138,14 @@ From the repository root:
 ```bash
 npx prettier --write "frontend/src/**/*.{js,jsx,css}" "backend/{src,scripts}/**/*.js"
 ```
+
+
+## In-app notifications
+
+The header bell opens `/notifications` and shows the unread count. The inbox supports individual read-on-open and marking all as read. It persists in MongoDB's `notifications` collection and refreshes the badge every 30 seconds while the page is visible. Notifications cover new friend requests, accepted requests, event registration/cancellation, joining a waitlist, promotion from the waitlist (including capacity increases), and organizer edits for registered/waitlisted students. Existing activity is not backfilled. Scheduled reminders, notification preferences, email, and push delivery are not included.
+
+Authenticated API: `GET /notifications?page=1`, `GET /notifications/unread`, `PUT /notifications/:id/read`, and `PUT /notifications/read-all`. Lists use 20 items per page. Read actions are idempotent and restricted to the recipient. Delivery failures are logged without failing an already-saved event/friend action; a durable retry queue remains future production work.
+
+## Production deployment
+
+Use the root `Dockerfile` and `compose.yaml` for a single-origin frontend/API deployment with Caddy HTTPS. Follow [DEPLOYMENT.md](DEPLOYMENT.md) to configure secrets, scoped MongoDB permissions, IP access, password migration, and validation.

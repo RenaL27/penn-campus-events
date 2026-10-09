@@ -107,6 +107,8 @@ export default function Register() {
             </label>
             <input
               type="password"
+              minLength={10}
+              autoComplete="new-password"
               name="password"
               value={formData.password}
               onChange={handleChange}

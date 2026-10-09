@@ -22,6 +22,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [motionPaused, setMotionPaused] = useState(false);
   const loggedIn = isLoggedIn();
   useEffect(() => {
     if (!loggedIn) return;
@@ -59,8 +60,16 @@ export default function Home() {
   }, [tab, page, loggedIn]);
   return (
     <Layout>
-      <section className="hero">
-        <div>
+      <section className={`hero home-hero ${motionPaused ? "motion-paused" : ""}`}>
+        <div className="hero-backdrop" aria-hidden="true">
+          <span className="hero-glow glow-blue" />
+          <span className="hero-glow glow-rose" />
+          <svg className="campus-linework" viewBox="0 0 1000 400" fill="none" preserveAspectRatio="xMidYMax slice">
+            <path d="M0 370H1000M60 370V210H210V370M80 210V170H190V210M105 170V140H165V170M135 140V95M225 370V255H335V370M350 370V190H460V370M380 190V145H430V190M405 145V95M480 370V225H670V370M510 225V175H640V225M555 175V135H595V175M575 135V80M690 370V250H790V370M810 370V205H950V370M835 205V165H925V205M880 165V110" />
+            <path d="M95 245H125V280H95ZM150 245H180V280H150ZM95 305H125V340H95ZM150 305H180V340H150ZM375 225H400V260H375ZM415 225H440V260H415ZM530 250H555V285H530ZM595 250H620V285H595ZM850 245H875V280H850ZM900 245H925V280H900ZM565 370V320Q575 295 585 320V370" />
+          </svg>
+        </div>
+        <div className="hero-content">
           <p className="eyebrow">PENN CAMPUS EVENTS</p>
           <h1>
             Campus events,
@@ -115,6 +124,9 @@ export default function Home() {
             View all categories <Icon name="arrow" size={16} />
           </Link>
         </aside>
+        <button className="hero-motion-toggle" onClick={() => setMotionPaused(value => !value)} aria-pressed={motionPaused}>
+          <span aria-hidden="true">{motionPaused ? "▷" : "Ⅱ"}</span> {motionPaused ? "Resume animation" : "Pause animation"}
+        </button>
       </section>
       {loggedIn && user && !user.interestsSet && (
         <div className="interest-banner">

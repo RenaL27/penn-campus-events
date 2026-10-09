@@ -1,6 +1,6 @@
 import { API_BASE } from "../utils/api";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -10,6 +10,7 @@ export default function Login() {
 
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const [params] = useSearchParams();
 
   function handleChange(e) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -55,6 +56,11 @@ export default function Login() {
       </Link>
       <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-md">
         <h1 className="text-3xl font-bold text-center mb-6">Login</h1>
+        {params.get("session") === "expired" && (
+          <p className="text-gray-600 text-center mb-4" role="status">
+            Your previous session is no longer valid. Log in to continue.
+          </p>
+        )}
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

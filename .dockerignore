@@ -1,0 +1,11 @@
+.git
+**/node_modules
+**/build
+**/.env
+**/.env.*
+!**/.env.example
+**/coverage
+*.pdf
+**/test
+**/*.test.*
+npm-debug.log*

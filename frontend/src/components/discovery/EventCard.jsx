@@ -63,23 +63,12 @@ export default function EventCard({ event, compact = false }) {
         </div>
       </Link>
       <div className="event-card-body">
-        <div className="event-eyebrow">
-          <span>
-            {eventDate(event.date)} · {eventTime(event.time)}
-          </span>
-          <span className="type-tag">{event.eventType || "In-Person"}</span>
-        </div>
-        <Link className="event-title" to={`/events/${event._id}`}>
-          {event.title}
-        </Link>
-        <p className="event-location">
-          <Icon name="pin" size={14} />
-          {event.location}
-        </p>
-        <p className="event-organizer">
-          {event.organizer?.name || "Campus community"}
-          <span>{event.attendanceCount || 0} going</span>
-        </p>
+        <p className="card-schedule"><Icon name="calendar" size={18} /><span>{eventDate(event.date)} · {eventTime(event.time)}</span></p>
+        <p className="event-location"><Icon name="pin" size={18} /><span>{event.location}</span></p>
+        {event.organizer?.name && (
+          <p className="card-host"><Icon name="people" size={18} /><span>Hosted by {event.organizer.name}</span></p>
+        )}
+        {event.eventType && event.eventType !== "In-Person" && <p className="card-format">{event.eventType} event</p>}
         {friends.length ? (
           <div className="friend-attendance">
             <span className="avatar-stack">
@@ -95,12 +84,9 @@ export default function EventCard({ event, compact = false }) {
               going
             </span>
           </div>
-        ) : (
-          <p className="recommendation-reason">
-            <Icon name="spark" size={13} />
-            {event.reasons?.[0] || "Upcoming campus event"}
-          </p>
-        )}
+        ) : event.attendanceCount > 0 ? (
+          <p className="card-attendance"><Icon name="people" size={18} />{event.attendanceCount} attending</p>
+        ) : null}
       </div>
     </article>
   );

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Notifications from "./pages/Notifications";
 import Home from "./pages/Home";
 import Preferences from "./pages/Preferences";
 import Friends from "./pages/Friends";
@@ -25,6 +26,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
         <Route path="/friends" element={<Friends />} />
         <Route path="/reels/:id" element={<ReelDetail />} />
         <Route path="/events" element={<Events />} />
