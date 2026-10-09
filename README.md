@@ -1,5 +1,7 @@
 # Penn Campus Events
 
+Live app: [penn-campus-events.onrender.com](https://penn-campus-events.onrender.com/)
+
 A campus events platform for Penn students, built with React, Express, and MongoDB. Students can discover events, personalize recommendations, connect with friends, watch event Reels, and register for events with automatic waitlist promotion.
 
 ## Implemented features

@@ -58,3 +58,17 @@ The frontend still stores bearer sessions in browser storage. It clears rejected
 The root `render.yaml` configures a free Node web service that builds both frontend and backend on Render. No local Docker build is required. After pushing the current changes, connect the repository in Render and create a Blueprint. Set the secret `MONGO_URI` when prompted. Render generates the JWT secret and provides the HTTPS hostname; the app uses `RENDER_EXTERNAL_URL` as its same-origin frontend setting. Add the service's outbound IP ranges from Render's dashboard to Atlas Network Access. Keep the database name in the URI. Existing account passwords have already been migrated in the current Atlas database.
 
 Free Render web services sleep after 15 minutes without inbound traffic, so the next visit may take longer. Free plans have usage limits. Select the free plan and do not enable paid resources. The current configuration uses MongoDB Atlas for persistent data, not the Render filesystem.
+
+
+## Current cloud deployment
+
+- Public website: https://penn-campus-events.onrender.com/
+- Render service: `penn-campus-events` (`srv-db45oovlot8c73ftg960`), Node runtime, Free plan, Oregon.
+- Render dashboard: https://dashboard.render.com/web/srv-db45oovlot8c73ftg960
+- Source: public GitHub repository, `main`. The service uses the build/start commands from `render.yaml` and `/health`.
+- `MONGO_URI` and a generated `JWT_SECRET` are stored in Render environment variables. Never copy them into Git.
+- Atlas database user `renal27` has `readWrite` only on `penn-campus-events`.
+- Atlas network access is limited to Render's observed Oregon ranges (`74.220.48.0/24`, `74.220.56.0/24`) and the current development network. The unrestricted `0.0.0.0/0` entry was removed. Update the development rule if that network changes, and check Render's Connect menu for any changed outbound ranges.
+- To publish future code updates from this public-repository setup, push to `main`, then use **Manual Deploy → Deploy latest commit** in Render. Do not assume automatic deploys without checking the service settings or configuring a Blueprint.
+
+Verified after deployment: HTTPS homepage and event cards load, `/health` returns 200, discovery returns the persistent Atlas events, direct event-page navigation serves the frontend, and anonymous access to notification data returns 401.
