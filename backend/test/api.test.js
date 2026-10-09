@@ -1,0 +1,132 @@
+process.env.MONGOMS_DOWNLOAD_DIR ||= require('node:path').join(require('node:os').tmpdir(), 'penn-events-mongodb-binaries');
+process.env.JWT_SECRET = 'integration-test-secret-only';
+const { test, before, after, beforeEach } = require('node:test');
+const assert = require('node:assert/strict');
+const mongoose = require('mongoose');
+const { MongoMemoryServer } = require('mongodb-memory-server');
+const request = require('supertest');
+const jwt = require('jsonwebtoken');
+const app = require('../src/app');
+const User = require('../src/models/user');
+const Event = require('../src/models/event');
+const Reel = require('../src/models/reel');
+const Friendship = require('../src/models/friendship');
+const Comment = require('../src/models/reelComment');
+let mongo, alice, bob, carol;
+const token = user => `Bearer ${jwt.sign({ userId: user._id }, process.env.JWT_SECRET)}`;
+const future = n => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+const createEvent = (overrides = {}) => Event.create({ title: 'Campus gathering', description: 'Meet people', date: future(2), time: '18:00', location: 'Houston Hall', capacity: 20, category: 'Arts & Media', eventType: 'In-Person', organizer: alice._id, ...overrides });
+before(async () => { mongo = await MongoMemoryServer.create({ instance: { launchTimeout: 60000 } }); await mongoose.connect(mongo.getUri()); await Promise.all([User.init(), Event.init(), Friendship.init()]); });
+after(async () => { await mongoose.disconnect(); if (mongo) await mongo.stop(); });
+beforeEach(async () => {
+  await Promise.all([User.deleteMany({}), Event.deleteMany({}), Reel.deleteMany({}), Friendship.deleteMany({}), Comment.deleteMany({})]);
+  [alice, bob, carol] = await User.create(['Alice', 'Bob', 'Carol'].map(name => ({ name, username: name.toLowerCase(), email: `${name}@example.test`, password: 'test-only' })));
+});
+test('interests persist and personalize the feed, and history is bounded, deduplicated and clearable', async () => {
+  const yoga = await createEvent({ title: 'Yoga meetup', category: 'Fitness & Wellness' });
+  await createEvent({ title: 'Art talk', date: future(1) });
+  await request(app).put('/users/me/interests').set('Authorization', token(bob)).send({ interests: ['Fitness & Wellness'] }).expect(200);
+  let feed = await request(app).get('/events/discover').set('Authorization', token(bob)).expect(200);
+  assert.equal(feed.body.events[0]._id, String(yoga._id));
+  assert.ok(feed.body.events[0].reasons.includes('Matches your interests'));
+  for (let i = 0; i < 12; i++) await request(app).post('/users/me/searches').set('Authorization', token(bob)).send({ query: `search ${i}` }).expect(200);
+  await request(app).post('/users/me/searches').set('Authorization', token(bob)).send({ query: 'SEARCH 11' }).expect(200);
+  let me = await request(app).get('/users/me').set('Authorization', token(bob)).expect(200);
+  assert.equal(me.body.searchHistory.length, 10); assert.equal(me.body.searchHistory[0].query, 'SEARCH 11'); assert.equal(me.body.password, undefined);
+  await request(app).post('/users/me/searches').set('Authorization', token(bob)).send({ query: '$literal search' }).expect(200);
+  me = await request(app).get('/users/me').set('Authorization', token(bob));
+  assert.equal(me.body.searchHistory[0].query, '$literal search');
+  await request(app).delete('/users/me/searches').set('Authorization', token(bob)).expect(204);
+  assert.equal((await User.findById(bob._id)).searchHistory.length, 0);
+  await request(app).put('/users/me/interests').set('Authorization', token(bob)).send({ interests: ['Invalid'] }).expect(400);
+});
+test('keyword/category/type/date filters combine and popularity/date sorting are distinct', async () => {
+  const popular = await createEvent({ title: 'Jazz night', attendees: [bob._id, carol._id], eventType: 'Hybrid', date: future(3) });
+  const early = await createEvent({ title: 'Jazz workshop', date: future(1), eventType: 'Online' });
+  await createEvent({ title: 'Expired Jazz', date: future(-1) });
+  const filtered = await request(app).get('/events/discover').query({ q: 'jazz', categories: 'Arts & Media', types: 'Hybrid', datePreset: 'date', date: future(3) }).expect(200);
+  assert.equal(filtered.body.total, 1); assert.equal(filtered.body.events[0]._id, String(popular._id));
+  assert.equal((await request(app).get('/events/discover?sort=popularity')).body.events[0]._id, String(popular._id));
+  assert.equal((await request(app).get('/events/discover?sort=date')).body.events[0]._id, String(early._id));
+  assert.equal((await request(app).get('/events/discover?q=%5B')).body.total, 0);
+  await request(app).get('/events/discover?categories=Invalid').expect(400);
+  await request(app).get('/events/discover?datePreset=date&date=2026-02-30').expect(400);
+  assert.equal((await request(app).get('/events/discover?limit=1&page=2')).body.events.length, 1);
+});
+test('friends attendance is visible only after recipient accepts; names and counts appear', async () => {
+  await createEvent({ attendees: [bob._id, carol._id] });
+  const sent = await request(app).post(`/users/me/friends/${bob._id}`).set('Authorization', token(alice)).expect(201);
+  const pendingFeed = await request(app).get('/events/discover?friends=true').set('Authorization', token(alice));
+  assert.equal(pendingFeed.body.total, 0);
+  await request(app).put(`/users/me/friends/${sent.body._id}`).set('Authorization', token(alice)).expect(404);
+  await request(app).put(`/users/me/friends/${sent.body._id}`).set('Authorization', token(bob)).expect(200);
+  const accepted = await request(app).get('/events/discover?friends=true').set('Authorization', token(alice)).expect(200);
+  assert.equal(accepted.body.events[0].attendanceCount, 2);
+  assert.deepEqual(accepted.body.events[0].friendsGoing.map(f => f.name), ['Bob']);
+  assert.equal(accepted.body.events[0].friendsGoing[0].avatar, '');
+  assert.equal(accepted.body.events[0].attendees, undefined);
+  await request(app).delete(`/users/me/friends/${sent.body._id}`).set('Authorization', token(carol)).expect(404);
+  await request(app).delete(`/users/me/friends/${sent.body._id}`).set('Authorization', token(bob)).expect(204);
+  assert.equal((await request(app).get('/events/discover?friends=true').set('Authorization', token(alice))).body.total, 0);
+});
+test('past attendance changes recommendations without leaking past events into discovery', async () => {
+  await createEvent({ category: 'Gaming & Tech', attendees: [bob._id], date: future(-2) });
+  const hack = await createEvent({ title: 'Hack night', category: 'Gaming & Tech', date: future(3) });
+  await createEvent({ date: future(1) });
+  const response = await request(app).get('/events/discover').set('Authorization', token(bob));
+  assert.equal(response.body.total, 2); assert.equal(response.body.events[0]._id, String(hack._id));
+  assert.ok(response.body.events[0].reasons.includes('Similar to events you attended'));
+});
+test('video upload is organizer-only, validates containers, persists and streams byte ranges', async () => {
+  const event = await createEvent();
+  const video = Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from('ftypmp42'), Buffer.alloc(256)]);
+  await request(app).post('/reels').set('Authorization', token(bob)).field('eventId', String(event._id)).attach('video', video, { filename: 'clip.mp4', contentType: 'video/mp4' }).expect(403);
+  await request(app).post('/reels').set('Authorization', token(alice)).field('eventId', String(event._id)).attach('video', Buffer.from('not video'), { filename: 'clip.mp4', contentType: 'video/mp4' }).expect(400);
+  const created = await request(app).post('/reels').set('Authorization', token(alice)).field('eventId', String(event._id)).field('caption', 'Come along!').attach('video', video, { filename: 'clip.mp4', contentType: 'video/mp4' }).expect(201);
+  const clip = await request(app).get(created.body.videoUrl).set('Range', 'bytes=4-11').expect(206);
+  assert.equal(clip.headers['content-range'], `bytes 4-11/${video.length}`); assert.equal(clip.headers['content-length'], '8');
+  assert.equal(clip.body.toString(), 'ftypmp42');
+  await request(app).get(created.body.videoUrl).set('Range', 'bytes=9999-').expect(416);
+  const whole = await request(app).get(created.body.videoUrl).expect(200); assert.equal(whole.body.length, video.length);
+  const suffix = await request(app).get(created.body.videoUrl).set('Range', 'bytes=-8').expect(206); assert.equal(suffix.body.length, 8);
+  const feed = await request(app).get('/reels').expect(200); assert.equal(feed.body.reels[0].caption, 'Come along!');
+});
+test('reel and comment likes are idempotent, shares are unique and feed popularity reflects engagement', async () => {
+  const event = await createEvent();
+  const reel = await Reel.create({ event: event._id, author: alice._id, videoId: new mongoose.Types.ObjectId(), mime: 'video/mp4', size: 12 });
+  await request(app).put(`/reels/${reel._id}/like`).send({ liked: true }).expect(401);
+  for (let i = 0; i < 2; i++) await request(app).put(`/reels/${reel._id}/like`).set('Authorization', token(bob)).send({ liked: true }).expect(200);
+  assert.equal((await Reel.findById(reel._id)).likes.length, 1);
+  await request(app).put(`/reels/${reel._id}/like`).set('Authorization', token(bob)).send({ liked: false }).expect(200);
+  assert.equal((await Reel.findById(reel._id)).likes.length, 0);
+  const comment = await request(app).post(`/reels/${reel._id}/comments`).set('Authorization', token(bob)).send({ text: 'See you there!' }).expect(201);
+  await request(app).post(`/reels/${reel._id}/comments`).set('Authorization', token(bob)).send({ text: ' ' }).expect(400);
+  for (let i = 0; i < 2; i++) {
+    await request(app).put(`/reels/${reel._id}/comments/${comment.body._id}/like`).set('Authorization', token(alice)).send({ liked: true }).expect(200);
+    await request(app).post(`/reels/${reel._id}/share`).set('Authorization', token(alice)).expect(200);
+  }
+  const comments = await request(app).get(`/reels/${reel._id}/comments`).set('Authorization', token(alice)).expect(200);
+  assert.equal(comments.body.comments[0].likeCount, 1); assert.equal(comments.body.comments[0].liked, true);
+  const shared = await request(app).get(`/reels/${reel._id}`).expect(200); assert.equal(shared.body.shareCount, 1);
+  const feed = await request(app).get('/events/discover').expect(200); assert.equal(feed.body.events[0].popularityScore, 5);
+});
+test('category editing, validation and existing RSVP/waitlist behavior remain functional', async () => {
+  const created = await request(app).post('/events/create').set('Authorization', token(alice)).send({ title: 'Meetup', date: future(2), time: '12:00', location: 'Campus', capacity: 1, category: 'Arts & Media', eventType: 'Online' }).expect(201);
+  const url = `/events/${created.body.eventId}`;
+  await request(app).put(url).set('Authorization', token(bob)).send({ category: 'Gaming & Tech' }).expect(403);
+  await request(app).put(url).set('Authorization', token(alice)).send({ category: 'Gaming & Tech', eventType: 'Hybrid' }).expect(200);
+  await request(app).post(`${url}/rsvp`).set('Authorization', token(bob)).expect(200);
+  await request(app).post(`${url}/rsvp`).set('Authorization', token(carol)).expect(200);
+  let event = await Event.findById(created.body.eventId); assert.equal(event.waitlist.length, 1);
+  await request(app).post(`${url}/rsvp`).set('Authorization', token(bob)).expect(200);
+  event = await Event.findById(created.body.eventId); assert.equal(String(event.attendees[0]), String(carol._id)); assert.equal(event.waitlist.length, 0);
+  await request(app).put(url).set('Authorization', token(alice)).send({ capacity: -1 }).expect(400);
+});
+
+test('legacy events without an event type remain discoverable as In-Person', async () => {
+  const event = await createEvent();
+  await Event.collection.updateOne({ _id: event._id }, { $unset: { eventType: '' } });
+  const result = await request(app).get('/events/discover?types=In-Person').expect(200);
+  assert.equal(result.body.total, 1);
+  assert.equal(result.body.events[0]._id, String(event._id));
+});

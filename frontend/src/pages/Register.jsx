@@ -1,3 +1,4 @@
+import { API_BASE } from "../utils/api";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -23,7 +24,7 @@ export default function Register() {
     setSuccess("");
 
     try {
-      const res = await fetch("http://localhost:8080/auth/register", {
+      const res = await fetch(`${API_BASE}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -38,7 +39,6 @@ export default function Register() {
 
       setSuccess("Registration successful! Redirecting to login...");
       setTimeout(() => navigate("/login"), 1200);
-
     } catch (err) {
       console.error("Registration error:", err);
       setError("Something went wrong. Please try again.");
@@ -57,7 +57,9 @@ export default function Register() {
       <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-md">
         <h1 className="text-3xl font-bold text-center mb-6">Register</h1>
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-        {success && <p className="text-green-600 text-center mb-4">{success}</p>}
+        {success && (
+          <p className="text-green-600 text-center mb-4">{success}</p>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -126,7 +128,6 @@ export default function Register() {
               Already have an account? Login
             </Link>
           </div>
-
         </form>
       </div>
     </div>

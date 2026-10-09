@@ -1,20 +1,32 @@
 const jwt = require("jsonwebtoken");
-
-module.exports = (req, res, next) => {
+const User = require("../models/user");
+async function authenticate(req, res, next) {
   try {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ error: "No token provided" });
-    }
-
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    req.userId = decoded.userId;
-
+    const header = req.headers.authorization;
+    if (!header?.startsWith("Bearer "))
+      return res.status(401).json({ error: "Please log in to continue." });
+    const decoded = jwt.verify(header.slice(7), process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId).select("-password");
+    if (!user)
+      return res
+        .status(401)
+        .json({ error: "Account not found. Please log in again." });
+    req.userId = String(user._id);
+    req.user = user;
     next();
-  } catch (err) {
-    return res.status(401).json({ error: "Invalid or expired token" });
+  } catch (error) {
+    if (
+      ["JsonWebTokenError", "TokenExpiredError", "CastError"].includes(
+        error.name,
+      )
+    ) {
+      return res
+        .status(401)
+        .json({ error: "Your session has expired. Please log in again." });
+    }
+    next(error);
   }
-};
+}
+module.exports = authenticate;
+module.exports.optional = (req, res, next) =>
+  req.headers.authorization ? authenticate(req, res, next) : next();

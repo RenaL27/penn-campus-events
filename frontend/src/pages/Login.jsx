@@ -1,3 +1,4 @@
+import { API_BASE } from "../utils/api";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -19,7 +20,7 @@ export default function Login() {
     setError("");
 
     try {
-      const res = await fetch("http://localhost:8080/auth/login", {
+      const res = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -37,8 +38,7 @@ export default function Login() {
       localStorage.setItem("userId", data.userId);
 
       // Redirect to dashboard
-      navigate("/dashboard");
-
+      navigate("/");
     } catch (err) {
       console.error("Login error:", err);
       setError("Something went wrong. Please try again.");
@@ -55,9 +55,7 @@ export default function Login() {
       </Link>
       <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-md">
         <h1 className="text-3xl font-bold text-center mb-6">Login</h1>
-        {error && (
-          <p className="text-red-500 text-center mb-4">{error}</p>
-        )}
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-left text-gray-700 font-medium">
@@ -99,7 +97,6 @@ export default function Login() {
               Don't have an account? Register
             </Link>
           </div>
-
         </form>
       </div>
     </div>

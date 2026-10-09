@@ -1,18 +1,43 @@
-// src/utils/api.js
-const BASE_URL = "http://localhost:8080";
-
-export async function api(path, method = "GET", body = null, auth = false) {
-  const headers = { "Content-Type": "application/json" };
-
-  if (auth) {
-    headers.Authorization = `Bearer ${localStorage.getItem("token")}`;
-  }
-
-  const res = await fetch(`${BASE_URL}${path}`, {
+export const API_BASE = (
+  process.env.REACT_APP_API_URL || "http://localhost:8080"
+).replace(/\/$/, "");
+export const isLoggedIn = () => Boolean(localStorage.getItem("token"));
+export async function api(
+  path,
+  method = "GET",
+  body = null,
+  auth = true,
+  signal,
+) {
+  const headers = {};
+  const token = localStorage.getItem("token");
+  if (auth && token) headers.Authorization = `Bearer ${token}`;
+  const form = body instanceof FormData;
+  if (body && !form) headers["Content-Type"] = "application/json";
+  const res = await fetch(`${API_BASE}${path}`, {
     method,
     headers,
-    body: body ? JSON.stringify(body) : null,
+    signal,
+    body: body ? (form ? body : JSON.stringify(body)) : undefined,
   });
-
-  return res.json();
+  if (res.status === 204) return null;
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok)
+    throw new Error(
+      data.error || `Request failed (${res.status}). Please try again.`,
+    );
+  return data;
+}
+export function eventDate(date) {
+  return new Date(date).toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
+export function eventTime(time) {
+  if (!time) return "";
+  const [h, m] = time.split(":").map(Number);
+  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
 }

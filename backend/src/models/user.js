@@ -1,12 +1,21 @@
 const mongoose = require("mongoose");
-
+const { CATEGORIES } = require("../services/discovery");
 const userSchema = new mongoose.Schema({
-    name: {type: String, required: true},
-    username: { type: String, required: true, unique: true },
-    email: { type: String, required: true, unique: true, lowercase: true },
-    password: { type: String, required: true },
-    eventsAttending: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
-    eventsWaitlisted: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
+  name: { type: String, required: true },
+  username: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true, lowercase: true },
+  password: { type: String, required: true },
+  avatar: { type: String, default: "" },
+  interests: [{ type: String, enum: CATEGORIES }],
+  interestsSet: { type: Boolean, default: false },
+  searchHistory: [
+    {
+      query: String,
+      searchedAt: { type: Date, default: Date.now },
+      _id: false,
+    },
+  ],
+  eventsAttending: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
+  eventsWaitlisted: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
 });
-
 module.exports = mongoose.model("User", userSchema);

@@ -1,3 +1,5 @@
+import { CATEGORIES, EVENT_TYPES } from "../utils/discovery";
+import { API_BASE } from "../utils/api";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
@@ -13,6 +15,8 @@ export default function CreateEvent() {
     time: "",
     capacity: "",
     location: "",
+    category: "",
+    eventType: "In-Person",
   });
 
   function handleChange(e) {
@@ -31,7 +35,7 @@ export default function CreateEvent() {
     }
 
     try {
-      const res = await fetch("http://localhost:8080/events/create", {
+      const res = await fetch(`${API_BASE}/events/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -52,7 +56,6 @@ export default function CreateEvent() {
       setTimeout(() => {
         navigate("/events");
       }, 800);
-
     } catch (err) {
       console.error("Create event error:", err);
       setError("Something went wrong. Please try again.");
@@ -71,9 +74,39 @@ export default function CreateEvent() {
         <h1 className="text-3xl font-bold text-center mb-6">Create Event</h1>
 
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-        {success && <p className="text-green-600 text-center mb-4">{success}</p>}
+        {success && (
+          <p className="text-green-600 text-center mb-4">{success}</p>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <label className="block">
+            Category
+            <select
+              name="category"
+              required
+              value={formData.category}
+              onChange={handleChange}
+              className="w-full mt-1 p-2 border rounded-lg"
+            >
+              <option value="">Choose a category</option>
+              {CATEGORIES.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            Event type
+            <select
+              name="eventType"
+              value={formData.eventType}
+              onChange={handleChange}
+              className="w-full mt-1 p-2 border rounded-lg"
+            >
+              {EVENT_TYPES.map((t) => (
+                <option key={t}>{t}</option>
+              ))}
+            </select>
+          </label>
 
           <div>
             <label className="block text-gray-700 font-medium">Title</label>
@@ -87,7 +120,9 @@ export default function CreateEvent() {
             />
           </div>
           <div>
-            <label className="block text-gray-700 font-medium">Description</label>
+            <label className="block text-gray-700 font-medium">
+              Description
+            </label>
             <textarea
               name="description"
               required
@@ -148,7 +183,6 @@ export default function CreateEvent() {
           >
             Create Event
           </button>
-
         </form>
       </div>
     </div>

@@ -1,20 +1,9 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require("cors");
 require('dotenv').config();
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-
-// connect to mongodb
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("Connected to MongoDB"))
-  .catch(err => console.error("MongoDB error:", err));
-
-// routes
-app.use('/auth', require('./src/routes/auth'));
-app.use('/events', require('./src/routes/events'));
-
-app.listen(8080, () => console.log("Server running on port 8080"));
+const mongoose = require('mongoose');
+const app = require('./src/app');
+async function start() {
+  if (!process.env.MONGO_URI || !process.env.JWT_SECRET) throw new Error('Set MONGO_URI and JWT_SECRET in backend/.env.');
+  await mongoose.connect(process.env.MONGO_URI);
+  app.listen(process.env.PORT || 8080, () => console.log(`Server running on port ${process.env.PORT || 8080}`));
+}
+start().catch(err => { console.error(err.message); process.exitCode = 1; });

@@ -1,3 +1,4 @@
+import { API_BASE } from "../utils/api";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -12,7 +13,7 @@ export default function Dashboard() {
   useEffect(() => {
     async function loadEvents() {
       try {
-        const res = await fetch("http://localhost:8080/events");
+        const res = await fetch(`${API_BASE}/events`);
         const data = await res.json();
 
         if (!res.ok) {
@@ -20,16 +21,15 @@ export default function Dashboard() {
           return;
         }
         const attendingEvents = data.filter((event) =>
-          event.attendees?.includes(userId)
+          event.attendees?.includes(userId),
         );
 
         const waitlistedEvents = data.filter((event) =>
-          event.waitlist?.includes(userId)
+          event.waitlist?.includes(userId),
         );
 
         setAttending(attendingEvents);
         setWaitlisted(waitlistedEvents);
-
       } catch (err) {
         console.error("Error loading dashboard:", err);
         setError("Something went wrong loading your dashboard.");
@@ -58,13 +58,17 @@ export default function Dashboard() {
         </p>
       )}
 
-      {loading && <p className="text-gray-500 text-lg">Loading your events...</p>}
+      {loading && (
+        <p className="text-gray-500 text-lg">Loading your events...</p>
+      )}
       {error && <p className="text-red-500 text-lg">{error}</p>}
 
       {!loading && !error && userId && (
         <div className="w-full max-w-5xl mt-6 grid grid-cols-1 md:grid-cols-2 gap-10">
           <div className="bg-white rounded-xl shadow p-6">
-            <h2 className="text-2xl font-semibold mb-4">Events You're Attending</h2>
+            <h2 className="text-2xl font-semibold mb-4">
+              Events You're Attending
+            </h2>
             <div className="h-80 overflow-y-auto space-y-4 pr-2">
               {attending.length > 0 ? (
                 attending.map((event) => (
@@ -81,7 +85,9 @@ export default function Dashboard() {
                   </Link>
                 ))
               ) : (
-                <p className="text-gray-500">You are not attending any events.</p>
+                <p className="text-gray-500">
+                  You are not attending any events.
+                </p>
               )}
             </div>
           </div>
@@ -107,7 +113,9 @@ export default function Dashboard() {
                   </Link>
                 ))
               ) : (
-                <p className="text-gray-500">You are not waitlisted for any events.</p>
+                <p className="text-gray-500">
+                  You are not waitlisted for any events.
+                </p>
               )}
             </div>
           </div>
