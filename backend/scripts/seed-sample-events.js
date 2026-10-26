@@ -153,7 +153,7 @@ const entries = [
 ];
 (async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 15000 });
     if (mongoose.connection.name !== "penn-campus-events")
       throw new Error("Unexpected database; seed cancelled.");
     let host = await User.findOne({ username: "sample-events-host" });
@@ -181,9 +181,10 @@ const entries = [
       description,
     ] of entries) {
       const title = `[Sample] ${name}`;
-      if (await Event.exists({ organizer: host._id, title })) continue;
       const date = new Date(`${today}T00:00:00.000Z`);
-      date.setUTCDate(date.getUTCDate() + offset);
+      date.setUTCDate(date.getUTCDate() + offset + 1);
+      // Preserve previous occurrences and avoid duplicates when rerun today.
+      if (await Event.exists({ organizer: host._id, title, date })) continue;
       await Event.create({
         title,
         category: CATEGORIES[category],
