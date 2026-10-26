@@ -25,7 +25,7 @@ export function Loading() {
   return (
     <div className="loading-state" role="status">
       <span className="loading-dot" />
-      Finding your next campus moment…
+      Loading…
     </div>
   );
 }
