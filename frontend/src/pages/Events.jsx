@@ -9,6 +9,7 @@ import {
 } from "../utils/discovery";
 import Layout from "../components/discovery/Layout";
 import Icon from "../components/discovery/Icon";
+import { eventArtwork } from "../utils/artwork";
 import Filters from "../components/discovery/Filters";
 import EventCard from "../components/discovery/EventCard";
 import {
@@ -145,11 +146,6 @@ export default function Events() {
       });
   return (
     <Layout>
-      <div className="page-intro">
-        <p className="eyebrow">EVENT DIRECTORY</p>
-        <h1>Browse events</h1>
-        <p>Find campus events by topic, date, format, and organization.</p>
-      </div>
       <div className="search-toolbar">
         <form
           className="search-box"
@@ -161,7 +157,7 @@ export default function Events() {
           <Icon name="search" />
           <input
             aria-label="Search events"
-            placeholder="Search events, interests, or organizers"
+            placeholder="Find things to do at Penn"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
@@ -188,6 +184,7 @@ export default function Events() {
           onApply={() => apply()}
           onReset={() => apply({ ...EMPTY_FILTERS }, q)}
           loggedIn={loggedIn}
+          onClose={() => setShowFilters(false)}
         />
       )}
       <div className="filter-chips">
@@ -214,7 +211,7 @@ export default function Events() {
         <section className="search-discovery">
           <div className="recent-panel">
             <div className="section-heading">
-              <h2>Recent searches</h2>
+              <h2>Recent</h2>
               {history.length > 0 && (
                 <button className="text-button" onClick={clearHistory}>
                   Clear
@@ -229,7 +226,7 @@ export default function Events() {
                   key={h.query}
                   onClick={() => apply(applied, h.query)}
                 >
-                  <Icon name="search" size={16} />
+                  <Icon name="clock" size={16} />
                   {h.query}
                   <Icon name="arrow" size={14} />
                 </button>
@@ -250,13 +247,17 @@ export default function Events() {
               Ranked by RSVPs, waitlists, and Reel engagement.
             </p>
             {trending.length ? (
-              trending.map((event, i) => (
+              trending.map((event) => (
                 <Link
                   className="trending-row"
                   to={`/events/${event._id}`}
                   key={event._id}
                 >
-                  <span className="trend-number">0{i + 1}</span>
+                  <img
+                    className="trend-image"
+                    src={eventArtwork(event)}
+                    alt=""
+                  />
                   <span>
                     <strong>{event.title}</strong>
                     <small>
@@ -300,7 +301,7 @@ export default function Events() {
           <>
             <div className="event-grid">
               {data.events.map((event) => (
-                <EventCard key={event._id} event={event} />
+                <EventCard key={event._id} event={event} compact />
               ))}
             </div>
             <Pagination
@@ -310,7 +311,7 @@ export default function Events() {
             />
           </>
         ) : (
-          <EmptyState title="No plans match just yet">
+          <EmptyState title="No matching events">
             Try another search or clear a filter to see more events.
           </EmptyState>
         ))

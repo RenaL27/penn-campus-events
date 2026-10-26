@@ -1,73 +1,67 @@
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { isLoggedIn } from "../../utils/api";
 import NotificationBell from "./NotificationBell";
 import Icon from "./Icon";
-export default function Layout({ children }) {
-  const navigate = useNavigate();
-  const loggedIn = isLoggedIn();
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    navigate("/login");
+export default function Layout({ children, title }) {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  const headings = {
+    "/": "Discover Events",
+    "/events": "Search For Events",
+    "/dashboard": "Calendar",
+    "/profile": "Profile",
+    "/friends": "Friends",
+    "/preferences": "Your Interests",
+    "/notifications": "Notifications",
+    "/create": "Create Event",
+    "/login": "Log In",
+    "/register": "Create Account",
   };
   return (
     <div className="discovery-app">
-      <header className="site-header">
-        <Link className="wordmark" to="/">
-          <span className="brand-mark">
-            p<span>e</span>
-          </span>
-          Penn<span>Events</span>
-        </Link>
-        <nav className="desktop-nav" aria-label="Main navigation">
-          <NavLink to="/" end>
-            For you
-          </NavLink>
-          <NavLink to="/events">Explore</NavLink>
-          <NavLink to="/friends">Friends</NavLink>
-          {loggedIn && <NavLink to="/dashboard">My events</NavLink>}
-        </nav>
-        <div className="header-actions">{loggedIn && <NotificationBell />}
-          {loggedIn ? (
-            <>
-              <Link className="button button-small" to="/create">
-                <Icon name="plus" size={16} />
-                Host an event
-              </Link>
-              <button className="text-button logout" onClick={logout}>
-                Sign out
-              </button>
-            </>
-          ) : (
-            <Link className="button button-small" to="/login">
-              Log in
-            </Link>
-          )}
-        </div>
+      <header className="app-header">
+        {pathname === "/" ? (
+          <Link
+            to="/preferences"
+            className="icon-button"
+            aria-label="Edit interests"
+          >
+            <Icon name="filter" />
+          </Link>
+        ) : (
+          <Link
+            to={pathname.startsWith("/events/") ? "/events" : "/"}
+            className="icon-button"
+            aria-label="Back to discovery"
+          >
+            <Icon name="back" />
+          </Link>
+        )}
+        <h1>{title || headings[pathname] || "Event Details"}</h1>
+        {isLoggedIn() ? (
+          <NotificationBell />
+        ) : (
+          <Link className="icon-button" to="/login" aria-label="Log in">
+            <Icon name="user" />
+          </Link>
+        )}
       </header>
       <main className="discovery-main">{children}</main>
-      <footer className="site-footer">
-        <span>PennEvents</span>
-        <span>Campus events and student activities</span>
-        <Link to="/preferences">Your interests</Link>
-      </footer>
-      <nav className="mobile-nav" aria-label="Mobile navigation">
-        <NavLink to="/" end>
-          <Icon name="home" />
-          For you
-        </NavLink>
-        <NavLink to="/events">
-          <Icon name="search" />
-          Explore
-        </NavLink>
-        <NavLink to="/friends">
-          <Icon name="people" />
-          Friends
-        </NavLink>
-        <NavLink to="/dashboard">
-          <Icon name="calendar" />
-          My events
-        </NavLink>
+      <nav className="mobile-nav" aria-label="Main navigation">
+        {[
+          ["/", "home", "Home"],
+          ["/events", "search", "Search"],
+          ["/dashboard", "calendar", "Calendar"],
+          ["/profile", "user", "Profile"],
+        ].map(([to, icon, label]) => (
+          <NavLink key={to} to={to} end={to === "/"} aria-label={label}>
+            <Icon name={icon} />
+            <span>{label}</span>
+          </NavLink>
+        ))}
       </nav>
     </div>
   );

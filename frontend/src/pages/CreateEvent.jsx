@@ -1,3 +1,4 @@
+import Layout from "../components/discovery/Layout";
 import { CATEGORIES, EVENT_TYPES } from "../utils/discovery";
 import { API_BASE } from "../utils/api";
 import { useState } from "react";
@@ -63,128 +64,164 @@ export default function CreateEvent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 relative">
-      <Link
-        to="/"
-        className="absolute top-4 left-4 text-blue-600 underline hover:text-blue-800"
-      >
-        ← Back to Home
-      </Link>
-      <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-xl">
-        <h1 className="text-3xl font-bold text-center mb-6">Create Event</h1>
-
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-        {success && (
-          <p className="text-green-600 text-center mb-4">{success}</p>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="block">
-            Category
-            <select
-              name="category"
-              required
-              value={formData.category}
-              onChange={handleChange}
-              className="w-full mt-1 p-2 border rounded-lg"
-            >
-              <option value="">Choose a category</option>
-              {CATEGORIES.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-          </label>
-          <label className="block">
-            Event type
-            <select
-              name="eventType"
-              value={formData.eventType}
-              onChange={handleChange}
-              className="w-full mt-1 p-2 border rounded-lg"
-            >
-              {EVENT_TYPES.map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </select>
-          </label>
-
-          <div>
-            <label className="block text-gray-700 font-medium">Title</label>
-            <input
-              type="text"
-              name="title"
-              required
-              value={formData.title}
-              onChange={handleChange}
-              className="w-full mt-1 p-2 border rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium">
-              Description
-            </label>
-            <textarea
-              name="description"
-              required
-              value={formData.description}
-              onChange={handleChange}
-              className="w-full mt-1 p-2 border rounded-lg"
-              rows={3}
-            ></textarea>
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium">Date</label>
-            <input
-              type="date"
-              name="date"
-              required
-              value={formData.date}
-              onChange={handleChange}
-              className="w-full mt-1 p-2 border rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium">Time</label>
-            <input
-              type="time"
-              name="time"
-              required
-              value={formData.time}
-              onChange={handleChange}
-              className="w-full mt-1 p-2 border rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium">Location</label>
-            <input
-              type="text"
-              name="location"
-              required
-              value={formData.location}
-              onChange={handleChange}
-              className="w-full mt-1 p-2 border rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium">Capacity</label>
-            <input
-              type="number"
-              name="capacity"
-              required
-              min="1"
-              value={formData.capacity}
-              onChange={handleChange}
-              className="w-full mt-1 p-2 border rounded-lg"
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
+    <Layout>
+      <div className="mobile-form-page">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 relative">
+          <Link
+            to="/"
+            className="absolute top-4 left-4 text-blue-600 underline hover:text-blue-800"
           >
-            Create Event
-          </button>
-        </form>
+            ← Back to Home
+          </Link>
+          <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-xl">
+            {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+            {success && (
+              <p className="text-green-600 text-center mb-4">{success}</p>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <label className="block">
+                Category
+                <select
+                  name="category"
+                  required
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="w-full mt-1 p-2 border rounded-lg"
+                >
+                  <option value="">Choose a category</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c}>{c}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                Event type
+                <select
+                  name="eventType"
+                  value={formData.eventType}
+                  onChange={handleChange}
+                  className="w-full mt-1 p-2 border rounded-lg"
+                >
+                  {EVENT_TYPES.map((t) => (
+                    <option key={t}>{t}</option>
+                  ))}
+                </select>
+              </label>
+
+              <div>
+                <label
+                  htmlFor="title"
+                  className="block text-gray-700 font-medium"
+                >
+                  Title
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  required
+                  value={formData.title}
+                  onChange={handleChange}
+                  className="w-full mt-1 p-2 border rounded-lg"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="description"
+                  className="block text-gray-700 font-medium"
+                >
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  required
+                  value={formData.description}
+                  onChange={handleChange}
+                  className="w-full mt-1 p-2 border rounded-lg"
+                  rows={3}
+                ></textarea>
+              </div>
+              <div>
+                <label
+                  htmlFor="date"
+                  className="block text-gray-700 font-medium"
+                >
+                  Date
+                </label>
+                <input
+                  type="date"
+                  id="date"
+                  name="date"
+                  required
+                  value={formData.date}
+                  onChange={handleChange}
+                  className="w-full mt-1 p-2 border rounded-lg"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="time"
+                  className="block text-gray-700 font-medium"
+                >
+                  Time
+                </label>
+                <input
+                  type="time"
+                  id="time"
+                  name="time"
+                  required
+                  value={formData.time}
+                  onChange={handleChange}
+                  className="w-full mt-1 p-2 border rounded-lg"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="location"
+                  className="block text-gray-700 font-medium"
+                >
+                  Location
+                </label>
+                <input
+                  type="text"
+                  id="location"
+                  name="location"
+                  required
+                  value={formData.location}
+                  onChange={handleChange}
+                  className="w-full mt-1 p-2 border rounded-lg"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="capacity"
+                  className="block text-gray-700 font-medium"
+                >
+                  Capacity
+                </label>
+                <input
+                  type="number"
+                  id="capacity"
+                  name="capacity"
+                  required
+                  min="1"
+                  value={formData.capacity}
+                  onChange={handleChange}
+                  className="w-full mt-1 p-2 border rounded-lg"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
+              >
+                Create Event
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 }

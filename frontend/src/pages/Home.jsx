@@ -21,8 +21,6 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
-  const [motionPaused, setMotionPaused] = useState(false);
   const loggedIn = isLoggedIn();
   useEffect(() => {
     if (!loggedIn) return;
@@ -59,75 +57,7 @@ export default function Home() {
     return () => controller.abort();
   }, [tab, page, loggedIn]);
   return (
-    <Layout>
-      <section className={`hero home-hero ${motionPaused ? "motion-paused" : ""}`}>
-        <div className="hero-backdrop" aria-hidden="true">
-          <span className="hero-glow glow-blue" />
-          <span className="hero-glow glow-rose" />
-          <svg className="campus-linework" viewBox="0 0 1000 400" fill="none" preserveAspectRatio="xMidYMax slice">
-            <path d="M0 370H1000M60 370V210H210V370M80 210V170H190V210M105 170V140H165V170M135 140V95M225 370V255H335V370M350 370V190H460V370M380 190V145H430V190M405 145V95M480 370V225H670V370M510 225V175H640V225M555 175V135H595V175M575 135V80M690 370V250H790V370M810 370V205H950V370M835 205V165H925V205M880 165V110" />
-            <path d="M95 245H125V280H95ZM150 245H180V280H150ZM95 305H125V340H95ZM150 305H180V340H150ZM375 225H400V260H375ZM415 225H440V260H415ZM530 250H555V285H530ZM595 250H620V285H595ZM850 245H875V280H850ZM900 245H925V280H900ZM565 370V320Q575 295 585 320V370" />
-          </svg>
-        </div>
-        <div className="hero-content">
-          <p className="eyebrow">PENN CAMPUS EVENTS</p>
-          <h1>
-            Campus events,
-            <br />
-            in one place.
-          </h1>
-          <p className="hero-description">
-            Explore academic talks, student organizations, arts,
-            <br className="desktop-break" /> and activities across Penn.
-          </p>
-          <form className="hero-search" action="/events">
-            <Icon name="search" />
-            <input
-              aria-label="Search campus events"
-              name="q"
-              placeholder="Search events, topics, or organizations"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <button aria-label="Search events" type="submit">
-              <Icon name="arrow" />
-            </button>
-          </form>
-        </div>
-        <aside className="campus-directory">
-          <p className="eyebrow">EXPLORE BY INTEREST</p>
-          <h2>Across campus</h2>
-          <p>Browse opportunities to learn, participate, and get involved.</p>
-          {[
-            [
-              "Academic & Career",
-              "Talks, research, and professional development",
-            ],
-            ["Clubs & Organizations", "Student groups and campus involvement"],
-            [
-              "Arts & Media",
-              "Performances, exhibitions, and creative workshops",
-            ],
-          ].map(([category, description]) => (
-            <Link
-              key={category}
-              to={`/events?categories=${encodeURIComponent(category)}`}
-            >
-              <span>
-                <strong>{category}</strong>
-                <small>{description}</small>
-              </span>
-              <Icon name="arrow" size={18} />
-            </Link>
-          ))}
-          <Link className="directory-all" to="/events">
-            View all categories <Icon name="arrow" size={16} />
-          </Link>
-        </aside>
-        <button className="hero-motion-toggle" onClick={() => setMotionPaused(value => !value)} aria-pressed={motionPaused}>
-          <span aria-hidden="true">{motionPaused ? "▷" : "Ⅱ"}</span> {motionPaused ? "Resume animation" : "Pause animation"}
-        </button>
-      </section>
+    <Layout title="Discover Events">
       {loggedIn && user && !user.interestsSet && (
         <div className="interest-banner">
           <Icon name="spark" />
@@ -141,15 +71,6 @@ export default function Home() {
         </div>
       )}
       <section className="feed-section">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">PERSONALIZED EVENTS</p>
-            <h2>For you</h2>
-          </div>
-          <Link className="text-link" to="/preferences">
-            Edit interests <Icon name="filter" size={16} />
-          </Link>
-        </div>
         <div className="feed-toolbar">
           <div
             className="feed-tabs"
@@ -160,7 +81,7 @@ export default function Home() {
               ["recommended", "spark", "Recommended"],
               ["friends", "people", "Friends Going"],
               ["reels", "play", "Reels"],
-            ].map(([value, icon, label]) => (
+            ].map(([value, , label]) => (
               <button
                 key={value}
                 role="tab"
@@ -168,14 +89,10 @@ export default function Home() {
                 className={tab === value ? "selected" : ""}
                 onClick={() => setParams({ tab: value })}
               >
-                <Icon name={icon} size={17} />
                 {label}
               </button>
             ))}
           </div>
-          <Link className="text-link browse-all" to="/events">
-            Browse all events <Icon name="arrow" size={16} />
-          </Link>
         </div>
         <ErrorMessage error={error} />
         {tab === "reels" ? (
@@ -189,13 +106,6 @@ export default function Home() {
         ) : (
           !error && (
             <>
-              <p className="feed-explanation">
-                {tab === "friends"
-                  ? "Upcoming events attended by your confirmed friends."
-                  : loggedIn
-                    ? "Picked from your interests, recent searches, past attendance, and what’s popular."
-                    : "Browse upcoming campus events. Log in for personalized recommendations."}
-              </p>
               {data.events.length ? (
                 <div className="event-grid">
                   {data.events.map((event) => (

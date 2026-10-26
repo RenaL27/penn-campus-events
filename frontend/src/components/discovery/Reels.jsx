@@ -226,48 +226,52 @@ function ReelCard({ initial }) {
         />
         <span className="reel-badge">
           <Icon name="play" size={14} />
-          CAMPUS IN MOTION
+          EVENT REEL
         </span>
+        <div className="reel-overlay">
+          <div className="reel-summary">
+            <div className="reel-author">
+              <Avatar user={reel.author} small />
+              <strong>{reel.author?.name || "Campus organizer"}</strong>
+            </div>
+            <Link className="reel-title" to={`/events/${reel.event._id}`}>
+              {reel.event.title} <Icon name="arrow" />
+            </Link>
+            <p className="muted">
+              {eventDate(reel.event.date)} · {reel.event.location}
+            </p>
+            <p className="reel-caption">{reel.caption}</p>
+          </div>
+          <div className="reel-actions">
+            <button
+              className={reel.liked ? "liked" : ""}
+              aria-label="Like Reel"
+              aria-pressed={reel.liked}
+              disabled={busy}
+              onClick={like}
+            >
+              <Icon name="heart" />
+              {reel.likeCount}
+            </button>
+            <button
+              aria-label="Show comments"
+              aria-expanded={commentsOpen}
+              onClick={() => setCommentsOpen(!commentsOpen)}
+            >
+              <Icon name="comment" />
+              {reel.commentCount}
+            </button>
+            <button aria-label="Share Reel" disabled={busy} onClick={share}>
+              <Icon name="share" />
+              {reel.shareCount}
+            </button>
+            <Link to={`/events/${reel.event._id}`} className="text-link">
+              View event →
+            </Link>
+          </div>
+        </div>
       </div>
       <div className="reel-content">
-        <div className="reel-author">
-          <Avatar user={reel.author} small />
-          <strong>{reel.author?.name || "Campus organizer"}</strong>
-        </div>
-        <Link className="reel-title" to={`/events/${reel.event._id}`}>
-          {reel.event.title} <Icon name="arrow" />
-        </Link>
-        <p className="muted">
-          {eventDate(reel.event.date)} · {reel.event.location}
-        </p>
-        <p className="reel-caption">{reel.caption}</p>
-        <div className="reel-actions">
-          <button
-            className={reel.liked ? "liked" : ""}
-            aria-label="Like Reel"
-            aria-pressed={reel.liked}
-            disabled={busy}
-            onClick={like}
-          >
-            <Icon name="heart" />
-            {reel.likeCount}
-          </button>
-          <button
-            aria-label="Show comments"
-            aria-expanded={commentsOpen}
-            onClick={() => setCommentsOpen(!commentsOpen)}
-          >
-            <Icon name="comment" />
-            {reel.commentCount}
-          </button>
-          <button aria-label="Share Reel" disabled={busy} onClick={share}>
-            <Icon name="share" />
-            {reel.shareCount}
-          </button>
-          <Link to={`/events/${reel.event._id}`} className="text-link">
-            View event →
-          </Link>
-        </div>
         <ErrorMessage error={error} />
         {message && (
           <p className="share-message" role="status">

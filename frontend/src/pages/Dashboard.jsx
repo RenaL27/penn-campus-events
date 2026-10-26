@@ -1,126 +1,157 @@
-import { API_BASE } from "../utils/api";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import Layout from "../components/discovery/Layout";
+import EventCard from "../components/discovery/EventCard";
+import { ErrorMessage, Loading } from "../components/discovery/Feedback";
+import { api, eventTime } from "../utils/api";
 
+// Calendar days use Philadelphia time, matching the event discovery filters.
+export const campusToday = () =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+export function weekDays(selected) {
+  const day = new Date(`${selected}T12:00:00Z`);
+  day.setUTCDate(day.getUTCDate() - day.getUTCDay());
+  return Array.from({ length: 7 }, (_, i) => {
+    const next = new Date(day);
+    next.setUTCDate(day.getUTCDate() + i);
+    return next.toISOString().slice(0, 10);
+  });
+}
 export default function Dashboard() {
-  const userId = localStorage.getItem("userId");
-
-  const [attending, setAttending] = useState([]);
-  const [waitlisted, setWaitlisted] = useState([]);
+  const [date, setDate] = useState(campusToday);
+  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+  const [view, setView] = useState("day");
+  const userId = localStorage.getItem("userId");
   useEffect(() => {
-    async function loadEvents() {
-      try {
-        const res = await fetch(`${API_BASE}/events`);
-        const data = await res.json();
-
-        if (!res.ok) {
-          setError("Failed to load events.");
-          return;
-        }
-        const attendingEvents = data.filter((event) =>
-          event.attendees?.includes(userId),
-        );
-
-        const waitlistedEvents = data.filter((event) =>
-          event.waitlist?.includes(userId),
-        );
-
-        setAttending(attendingEvents);
-        setWaitlisted(waitlistedEvents);
-      } catch (err) {
-        console.error("Error loading dashboard:", err);
-        setError("Something went wrong loading your dashboard.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadEvents();
-  }, [userId]);
-
+    const controller = new AbortController();
+    api("/events", "GET", null, true, controller.signal)
+      .then(setEvents)
+      .catch((e) => {
+        if (e.name !== "AbortError") setError(e.message);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, []);
+  const member = (list) => (list || []).some((u) => (u._id || u) === userId);
+  const registered = events.filter(
+    (e) => member(e.attendees) || member(e.waitlist),
+  );
+  const selected = (
+    view === "hosting"
+      ? events.filter((e) => (e.organizer?._id || e.organizer) === userId)
+      : registered.filter((e) => view === "all" || e.date.slice(0, 10) === date)
+  ).sort(
+    (a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time),
+  );
   return (
-    <div className="min-h-screen bg-gray-50 p-10 flex flex-col items-center relative">
-      <Link
-        to="/"
-        className="absolute top-6 left-6 text-blue-600 underline hover:text-blue-800"
-      >
-        ← Back to Home
-      </Link>
-
-      <h1 className="text-4xl font-bold mb-6">Your Dashboard</h1>
-
-      {!userId && (
-        <p className="text-red-500 text-lg">
-          You are not logged in. This page requires authentication.
-        </p>
-      )}
-
-      {loading && (
-        <p className="text-gray-500 text-lg">Loading your events...</p>
-      )}
-      {error && <p className="text-red-500 text-lg">{error}</p>}
-
-      {!loading && !error && userId && (
-        <div className="w-full max-w-5xl mt-6 grid grid-cols-1 md:grid-cols-2 gap-10">
-          <div className="bg-white rounded-xl shadow p-6">
-            <h2 className="text-2xl font-semibold mb-4">
-              Events You're Attending
-            </h2>
-            <div className="h-80 overflow-y-auto space-y-4 pr-2">
-              {attending.length > 0 ? (
-                attending.map((event) => (
-                  <Link
-                    key={event._id}
-                    to={`/events/${event._id}`}
-                    className="block bg-gray-100 p-4 rounded-lg hover:bg-gray-200 transition"
-                  >
-                    <h3 className="text-lg font-bold">{event.title}</h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {new Date(event.date).toLocaleDateString()} — {event.time}
-                    </p>
-                    <p className="text-sm mt-1">📍 {event.location}</p>
-                  </Link>
-                ))
-              ) : (
-                <p className="text-gray-500">
-                  You are not attending any events.
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow p-6">
-            <h2 className="text-2xl font-semibold mb-4">Waitlisted Events</h2>
-
-            <div className="h-80 overflow-y-auto space-y-4 pr-2">
-              {waitlisted.length > 0 ? (
-                waitlisted.map((event) => (
-                  <Link
-                    key={event._id}
-                    to={`/events/${event._id}`}
-                    className="block bg-yellow-50 border border-yellow-200 p-4 rounded-lg hover:bg-yellow-100 transition"
-                  >
-                    <h3 className="text-lg font-bold">{event.title}</h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {new Date(event.date).toLocaleDateString()} — {event.time}
-                    </p>
-                    <p className="text-sm mt-1">📍 {event.location}</p>
-                    <p className="text-xs text-yellow-700 mt-1 font-medium">
-                      You are on the waitlist
-                    </p>
-                  </Link>
-                ))
-              ) : (
-                <p className="text-gray-500">
-                  You are not waitlisted for any events.
-                </p>
-              )}
-            </div>
-          </div>
+    <Layout>
+      <section className="calendar-heading">
+        <div>
+          <p>
+            {new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", {
+              weekday: "long",
+              timeZone: "UTC",
+            })}
+          </p>
+          <h2>
+            {new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              timeZone: "UTC",
+            })}
+          </h2>
         </div>
+        <label className="calendar-picker">
+          Choose date
+          <input
+            aria-label="Choose calendar date"
+            type="date"
+            value={date}
+            onChange={(e) => {
+              if (e.target.value) {
+                setDate(e.target.value);
+                setView("day");
+              }
+            }}
+          />
+        </label>
+      </section>
+      <div className="calendar-week">
+        {weekDays(date).map((day) => (
+          <button
+            key={day}
+            className={day === date ? "selected" : ""}
+            aria-pressed={day === date}
+            aria-label={day}
+            onClick={() => {
+              setDate(day);
+              setView("day");
+            }}
+          >
+            <span>
+              {new Date(`${day}T12:00:00Z`).toLocaleDateString("en-US", {
+                weekday: "short",
+                timeZone: "UTC",
+              })}
+            </span>
+            <strong>{Number(day.slice(-2))}</strong>
+            <i
+              className={
+                registered.some((e) => e.date.startsWith(day))
+                  ? "has-events"
+                  : ""
+              }
+            />
+          </button>
+        ))}
+      </div>
+      <div className="calendar-tabs">
+        {[
+          ["day", "Selected day"],
+          ["all", "All registrations"],
+          ["hosting", "Hosting"],
+        ].map(([value, label]) => (
+          <button
+            key={value}
+            aria-pressed={view === value}
+            className={view === value ? "selected" : ""}
+            onClick={() => setView(value)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <ErrorMessage error={error} />
+      {loading ? (
+        <Loading />
+      ) : (
+        !error &&
+        (selected.length ? (
+          selected.map((event) => (
+            <section className="agenda-item" key={event._id}>
+              <h3>
+                {eventTime(event.time)}{" "}
+                {member(event.waitlist) && <span>Waitlisted</span>}
+              </h3>
+              <EventCard event={event} compact />
+            </section>
+          ))
+        ) : (
+          <p className="calendar-empty">
+            {view === "hosting"
+              ? "Events you create will appear here."
+              : "No registrations for this view. Find an event and register to add it to your calendar."}
+          </p>
+        ))
       )}
-    </div>
+    </Layout>
   );
 }

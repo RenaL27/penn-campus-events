@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { eventDate, eventTime } from "../../utils/api";
-import { CATEGORIES } from "../../utils/discovery";
+import { eventArtwork } from "../../utils/artwork";
 import Icon from "./Icon";
 export function Avatar({ user, small = false }) {
   const initials = (user?.name || "Student")
@@ -28,48 +29,46 @@ export function Avatar({ user, small = false }) {
   );
 }
 export default function EventCard({ event, compact = false }) {
-  const index = Math.max(0, CATEGORIES.indexOf(event.category));
+  const [message, setMessage] = useState("");
   const friends = event.friendsGoing || [];
-  const date = new Date(event.date);
-  const month = date.toLocaleDateString("en-US", {
-    month: "short",
-    timeZone: "UTC",
-  });
-  const day = date.toLocaleDateString("en-US", {
-    day: "numeric",
-    timeZone: "UTC",
-  });
+  async function share() {
+    const url = `${window.location.origin}/events/${event._id}`;
+    try {
+      if (navigator.share) await navigator.share({ title: event.title, url });
+      else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(url);
+        setMessage("Link copied");
+      } else setMessage(url);
+    } catch (e) {
+      if (e.name !== "AbortError") setMessage(url);
+    }
+  }
   return (
     <article className={`event-card ${compact ? "event-card-compact" : ""}`}>
       <Link
         to={`/events/${event._id}`}
-        className={`event-art art-${index % 4}`}
+        className="event-art"
         aria-label={`View ${event.title}`}
       >
-        <div className="event-cover-top">
-          <span className="art-category">
-            {event.category || "Campus event"}
-          </span>
-          <span className="event-date-badge">
-            <span>{month}</span>
-            <strong>{day}</strong>
-          </span>
-        </div>
-        <div className="event-cover-bottom">
-          <span className="art-title">{event.title}</span>
-          <span className="art-arrow">
-            <Icon name="arrow" />
-          </span>
-        </div>
+        <img src={eventArtwork(event)} alt="" loading="lazy" />
       </Link>
       <div className="event-card-body">
-        <p className="card-schedule"><Icon name="calendar" size={18} /><span>{eventDate(event.date)} · {eventTime(event.time)}</span></p>
-        <p className="event-location"><Icon name="pin" size={18} /><span>{event.location}</span></p>
-        {event.organizer?.name && (
-          <p className="card-host"><Icon name="people" size={18} /><span>Hosted by {event.organizer.name}</span></p>
+        <div className="card-title-row">
+          <h2>
+            <Link to={`/events/${event._id}`}>{event.title}</Link>
+          </h2>
+          <button onClick={share} aria-label={`Share ${event.title}`}>
+            <Icon name="share" size={18} />
+          </button>
+        </div>
+        <p>
+          {eventDate(event.date)} · {eventTime(event.time)} · {event.location}
+        </p>
+        <p>{event.organizer?.name || "Campus organizer"}</p>
+        {event.eventType && event.eventType !== "In-Person" && (
+          <p>{event.eventType}</p>
         )}
-        {event.eventType && event.eventType !== "In-Person" && <p className="card-format">{event.eventType} event</p>}
-        {friends.length ? (
+        {friends.length > 0 && (
           <div className="friend-attendance">
             <span className="avatar-stack">
               {friends.slice(0, 3).map((f) => (
@@ -79,14 +78,17 @@ export default function EventCard({ event, compact = false }) {
             <span>
               {friends[0].name}
               {friends.length > 1
-                ? ` + ${friends.length - 1} friend${friends.length > 2 ? "s" : ""}`
+                ? ` and ${friends.length - 1} friend${friends.length > 2 ? "s" : ""}`
                 : ""}{" "}
               going
             </span>
           </div>
-        ) : event.attendanceCount > 0 ? (
-          <p className="card-attendance"><Icon name="people" size={18} />{event.attendanceCount} attending</p>
-        ) : null}
+        )}
+        {message && (
+          <p role="status" className="share-message">
+            {message}
+          </p>
+        )}
       </div>
     </article>
   );

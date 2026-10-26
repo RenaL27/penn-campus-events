@@ -5,6 +5,8 @@ import Preferences from "./pages/Preferences";
 import Friends from "./pages/Friends";
 import ReelDetail from "./pages/ReelDetail";
 import "./discovery.css";
+import "./mobile.css";
+import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Events from "./pages/Events";
@@ -18,6 +20,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/profile" element={<Profile />} />
         <Route
           path="/preferences"
           element={
@@ -26,7 +29,14 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Notifications />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/friends" element={<Friends />} />
         <Route path="/reels/:id" element={<ReelDetail />} />
         <Route path="/events" element={<Events />} />

@@ -1,14 +1,18 @@
+import { eventArtwork } from "../utils/artwork";
 import { CATEGORIES, EVENT_TYPES } from "../utils/discovery";
 import Layout from "../components/discovery/Layout";
 import Icon from "../components/discovery/Icon";
 import { eventDate, eventTime } from "../utils/api";
-import { API_BASE } from "../utils/api";
+import { api } from "../utils/api";
 import { useCallback, useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function EventDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -23,14 +27,8 @@ export default function EventDetail() {
 
   const loadEvent = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/events/${id}`);
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Failed to load event");
-        return;
-      }
-
+      const data = await api(`/events/${id}`);
+      setError("");
       setEvent(data);
       setEditData(data);
 
@@ -50,25 +48,22 @@ export default function EventDetail() {
   }, [loadEvent]);
 
   async function handleRSVP() {
-    const token = localStorage.getItem("token");
-    if (!token) return alert("Please log in.");
-
+    if (!localStorage.getItem("token")) {
+      navigate("/login");
+      return;
+    }
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    setActionMessage("");
     try {
-      const res = await fetch(`${API_BASE}/events/${id}/rsvp`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-      if (!res.ok) return alert(data.error);
-      alert(data.message);
-
-      loadEvent();
-    } catch {
-      alert("Something went wrong.");
+      const data = await api(`/events/${id}/rsvp`, "POST");
+      setActionMessage(data.message);
+      await loadEvent();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -81,26 +76,17 @@ export default function EventDetail() {
 
   async function handleEditSubmit(e) {
     e.preventDefault();
-    const token = localStorage.getItem("token");
-
+    setBusy(true);
+    setError("");
     try {
-      const res = await fetch(`${API_BASE}/events/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(editData),
-      });
-
-      const data = await res.json();
-      if (!res.ok) return alert(data.error);
-
-      alert("Event updated!");
+      await api(`/events/${id}`, "PUT", editData);
+      setActionMessage("Event updated.");
       setShowEdit(false);
-      loadEvent();
-    } catch {
-      alert("Error updating event.");
+      await loadEvent();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -113,7 +99,11 @@ export default function EventDetail() {
         transition={{ duration: 0.6 }}
       >
         {loading && <p>Loading...</p>}
-        {error && <p className="text-red-500">{error}</p>}
+        {error && (
+          <p className="text-red-500" role="alert">
+            {error}
+          </p>
+        )}
 
         <AnimatePresence>
           {event && (
@@ -124,6 +114,7 @@ export default function EventDetail() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.4 }}
             >
+              <img className="detail-cover" src={eventArtwork(event)} alt="" />
               <header className="event-detail-header">
                 <p className="eyebrow">{event.category || "CAMPUS EVENT"}</p>
                 <h1>{event.title}</h1>
@@ -173,12 +164,22 @@ export default function EventDetail() {
               </div>
               <motion.button
                 onClick={handleRSVP}
+                disabled={busy}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 className="button event-register"
               >
-                {getButtonLabel()}
+                {busy ? "Updating…" : getButtonLabel()}
               </motion.button>
+
+              {actionMessage && (
+                <p className="registration-feedback" role="status">
+                  {actionMessage}{" "}
+                  {status === "attending" && (
+                    <Link to="/dashboard">View calendar →</Link>
+                  )}
+                </p>
+              )}
 
               {event.organizer?._id === userId && (
                 <div className="mt-8 space-y-3">
@@ -309,6 +310,7 @@ export default function EventDetail() {
                     <motion.button
                       whileHover={{ scale: 1.03 }}
                       className="w-full py-2 bg-green-600 text-white rounded"
+                      disabled={busy}
                     >
                       Save Changes
                     </motion.button>

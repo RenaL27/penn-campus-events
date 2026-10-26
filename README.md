@@ -55,3 +55,11 @@ npm run build --prefix frontend
 See [DEPLOYMENT.md](DEPLOYMENT.md) for Render, Docker, secrets, and MongoDB access configuration. Never commit environment files containing credentials.
 
 Calendar integration, saved events, messaging, richer profiles, and email/push notifications remain future work.
+
+### Mobile app
+
+The interface follows the final mobile screens in the case study: pale blue surfaces, compact event feeds, red discovery-tab indicators, teal buttons, and a rounded bottom navigation bar. Home, Search, Calendar, and Profile share the same mobile shell. The calendar shows actual registrations, waitlists, and hosted events.
+
+Install the deployed app from Safari's **Share → Add to Home Screen** or Chrome's **Install app / Add to Home screen** menu. It opens in standalone mode. Live event and account features require an internet connection; offline navigation shows a reconnect screen. The service worker caches only public static assets, never API responses or account data.
+
+Illustrative event covers are extracted from the supplied case-study mockups and chosen by category; they are not photographs of the listed events. Messaging, organization following, and saved events shown in the concept are still outside the implemented product.

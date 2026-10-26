@@ -7,3 +7,13 @@ import "@testing-library/jest-dom";
 const { TextEncoder, TextDecoder } = require("util");
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
+
+// JSDOM does not implement viewport scrolling.
+window.scrollTo = jest.fn();
+
+HTMLDialogElement.prototype.showModal = function () {
+  this.setAttribute("open", "");
+};
+HTMLDialogElement.prototype.close = function () {
+  this.removeAttribute("open");
+};
