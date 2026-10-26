@@ -62,4 +62,4 @@ The interface follows the final mobile screens in the case study: pale blue surf
 
 Install the deployed app from Safari's **Share → Add to Home Screen** or Chrome's **Install app / Add to Home screen** menu. It opens in standalone mode. Live event and account features require an internet connection; offline navigation shows a reconnect screen. The service worker caches only public static assets, never API responses or account data.
 
-Illustrative event covers are extracted from the supplied case-study mockups and chosen by category; they are not photographs of the listed events. Messaging, organization following, and saved events shown in the concept are still outside the implemented product.
+Events use distinct illustrative stock covers matched to their topic, with category fallbacks. They are not photographs of the listed events; image sources are recorded in `frontend/public/artwork/events/SOURCES.md`. Eight fictional student profiles are searchable under “demo” in Friends. Messaging, organization following, and saved events shown in the concept are still outside the implemented product.
