@@ -153,7 +153,9 @@ const entries = [
 ];
 (async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 15000 });
+    await mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 15000,
+    });
     if (mongoose.connection.name !== "penn-campus-events")
       throw new Error("Unexpected database; seed cancelled.");
     let host = await User.findOne({ username: "sample-events-host" });

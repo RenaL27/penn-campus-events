@@ -52,13 +52,11 @@ The API applies security headers, a 100 KB JSON limit, failed-login limits, gene
 
 The frontend still stores bearer sessions in browser storage. It clears rejected tokens and redirects to login. A future HTTP-only cookie session design would further reduce exposure to script injection. Runtime backend dependencies should be audited regularly; frontend build-tool dependencies are not included in the runtime image.
 
-
 ## Free cloud alternative: Render
 
 The root `render.yaml` configures a free Node web service that builds both frontend and backend on Render. No local Docker build is required. After pushing the current changes, connect the repository in Render and create a Blueprint. Set the secret `MONGO_URI` when prompted. Render generates the JWT secret and provides the HTTPS hostname; the app uses `RENDER_EXTERNAL_URL` as its same-origin frontend setting. Add the service's outbound IP ranges from Render's dashboard to Atlas Network Access. Keep the database name in the URI. Existing account passwords have already been migrated in the current Atlas database.
 
 Free Render web services sleep after 15 minutes without inbound traffic, so the next visit may take longer. Free plans have usage limits. Select the free plan and do not enable paid resources. The current configuration uses MongoDB Atlas for persistent data, not the Render filesystem.
-
 
 ## Current cloud deployment
 

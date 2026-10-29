@@ -103,14 +103,34 @@ router.put("/:eventId", auth, async (req, res) => {
       .json({ error: "Capacity cannot be below current attendance." });
   const previous = { ...event.toObject() };
   const previousAttendees = new Set(event.attendees.map(String));
-  const changed = Object.keys(fields).some(key => String(fields[key]) !== String(event[key]));
+  const changed = Object.keys(fields).some(
+    (key) => String(fields[key]) !== String(event[key]),
+  );
   Object.assign(event, fields);
   while (event.attendees.length < event.capacity && event.waitlist.length)
     event.attendees.push(event.waitlist.shift());
   await event.save();
-  const promoted = event.attendees.filter(id => !previousAttendees.has(String(id)));
-  await notify(promoted, { kind: "promotion", title: "A place is available", message: `You are now registered for ${event.title}.`, href: `/events/${event._id}` });
-  if (changed) await notify([...previous.attendees, ...previous.waitlist].filter(id => String(id) !== req.userId), { kind: "event_update", title: "Event updated", message: `The organizer updated ${event.title}. Review the latest details.`, href: `/events/${event._id}` });
+  const promoted = event.attendees.filter(
+    (id) => !previousAttendees.has(String(id)),
+  );
+  await notify(promoted, {
+    kind: "promotion",
+    title: "A place is available",
+    message: `You are now registered for ${event.title}.`,
+    href: `/events/${event._id}`,
+  });
+  if (changed)
+    await notify(
+      [...previous.attendees, ...previous.waitlist].filter(
+        (id) => String(id) !== req.userId,
+      ),
+      {
+        kind: "event_update",
+        title: "Event updated",
+        message: `The organizer updated ${event.title}. Review the latest details.`,
+        href: `/events/${event._id}`,
+      },
+    );
   res.json({ message: "Event updated successfully", event });
 });
 router.post("/:eventId/rsvp", auth, async (req, res) => {
@@ -138,8 +158,27 @@ router.post("/:eventId/rsvp", auth, async (req, res) => {
     message = "Event is full. You have been added to the waitlist.";
   }
   await event.save();
-  await notify([req.userId], { kind, title: { cancellation: "Registration cancelled", registration: "Registration confirmed", waitlist: "Added to waitlist" }[kind], message: `${message} — ${event.title}`, href: `/events/${event._id}` });
-  await notify(event.attendees.filter(id => String(id) !== req.userId && !previousAttendees.has(String(id))), { kind: "promotion", title: "A place is available", message: `You are now registered for ${event.title}.`, href: `/events/${event._id}` });
+  await notify([req.userId], {
+    kind,
+    title: {
+      cancellation: "Registration cancelled",
+      registration: "Registration confirmed",
+      waitlist: "Added to waitlist",
+    }[kind],
+    message: `${message} — ${event.title}`,
+    href: `/events/${event._id}`,
+  });
+  await notify(
+    event.attendees.filter(
+      (id) => String(id) !== req.userId && !previousAttendees.has(String(id)),
+    ),
+    {
+      kind: "promotion",
+      title: "A place is available",
+      message: `You are now registered for ${event.title}.`,
+      href: `/events/${event._id}`,
+    },
+  );
   res.json({ message });
 });
 module.exports = router;

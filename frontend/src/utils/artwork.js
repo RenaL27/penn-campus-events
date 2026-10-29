@@ -33,7 +33,11 @@ export function eventArtwork(event) {
   const title = event.title || "";
   const matched = covers.find(([pattern]) => pattern.test(title));
   if (matched) return `/artwork/events/${matched[1]}.jpg`;
-  const choices = categoryCovers[event.category] || ["clubs", "picnic", "social"];
+  const choices = categoryCovers[event.category] || [
+    "clubs",
+    "picnic",
+    "social",
+  ];
   // A stable choice avoids changing the cover when a list is sorted or filtered.
   const hash = Array.from(String(event._id || title)).reduce(
     (sum, character) => (sum * 31 + character.charCodeAt(0)) >>> 0,

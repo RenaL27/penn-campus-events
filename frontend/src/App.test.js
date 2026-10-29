@@ -101,7 +101,9 @@ test("search saves only submitted terms and history can be cleared", async () =>
       <Events />
     </MemoryRouter>,
   );
-  await screen.findByText("No recent searches. Search by event title, topic, or organization.");
+  await screen.findByText(
+    "No recent searches. Search by event title, topic, or organization.",
+  );
   userEvent.type(
     screen.getByRole("textbox", { name: "Search events" }),
     "Jazz",
